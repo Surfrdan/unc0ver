@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+
+import argparse
+from multiprocessing.dummy import Pool as ThreadPool
+import requests
+import os
+import sys
+import urllib3
+from termcolor import colored
+
+urllib3.disable_warnings()
+
+THREADS = 12
+wordlist_file = os.path.dirname(os.path.realpath(__file__)) + '/complete_wordlist.txt'
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-u', type=str, help='Base URL e.g. https://example.com')
+parser.add_argument('-w', type=str, help='Wordlist file e.g. wordlist.txt')
+args = parser.parse_args()
+
+pool = ThreadPool(THREADS)
+
+def make_request(url):
+    note = ''
+
+    try:
+        r = requests.get(url, verify=False, allow_redirects=False)
+        status_code = r.status_code
+    except requests.exceptions.ConnectionError as e:
+        status_code = 0
+    except requests.exceptions.RequestException as e:
+        status_code = 0
+        
+    if status_code in range(200,226,1):
+        status_code = colored(status_code, 'green')
+        if ('server' in r.headers):
+            note = r.headers['server']
+
+    if status_code in [301, 302, 303, 304, 305, 306, 307, 308]:
+        if ('location' in r.headers):
+            status_code = colored(status_code, 'yellow')
+            note = r.headers['Location']
+
+    if status_code in range(500,511,1):
+        status_code = colored(status_code, 'red')
+        if ('server' in r.headers):
+            note = r.headers['server']
+
+    if status_code in [400,401,402,403,404]:
+        status_code = colored(status_code, 'red')
+        if ('server' in r.headers):
+            note = r.headers['server']
+
+    print ('{0} {1} {2}'.format(status_code, url, note))
+    if status_code is not 0:
+        return r
+    else:
+        return False
+
+if args.u:
+    base_url = args.u
+else:
+    print('Please supply a base URL with -u')
+    sys.exit(0)
+
+if args.w:
+    wordlist_file = args.w
+
+wordlist = open(wordlist_file)
+words = wordlist.read().splitlines()
+
+urls = list()
+
+for word in words:
+    if not word.startswith('/'):
+        word = '/{0}'.format(word)
+    urls.append('{0}{1}'.format(base_url,word))
+
+new_results = pool.map(make_request, urls)
+pool.close()
+pool.join()
