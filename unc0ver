@@ -16,13 +16,16 @@ wordlist_file = os.path.dirname(os.path.realpath(__file__)) + '/complete_wordlis
 parser = argparse.ArgumentParser()
 parser.add_argument('-u', type=str, help='Base URL e.g. https://example.com')
 parser.add_argument('-w', type=str, help='Wordlist file e.g. wordlist.txt')
+parser.add_argument('-e', type=str, help='Optional file extension e.g. tpl')
 args = parser.parse_args()
 
 pool = ThreadPool(THREADS)
 
 def make_request(url):
+    if args.e:
+        url = '{0}.{1}'.format(url,args.e)
+        
     note = ''
-
     try:
         r = requests.get(url, verify=False, allow_redirects=False)
         status_code = r.status_code
