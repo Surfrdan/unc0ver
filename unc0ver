@@ -8,7 +8,7 @@ import sys
 import urllib3
 from termcolor import colored
 
-urllib3.disable_warnings()
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 THREADS = 12
 wordlist_file = os.path.dirname(os.path.realpath(__file__)) + '/complete_wordlist.txt'
