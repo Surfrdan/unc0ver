@@ -17,6 +17,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-u', type=str, help='Base URL e.g. https://example.com')
 parser.add_argument('-w', type=str, help='Wordlist file e.g. wordlist.txt')
 parser.add_argument('-e', type=str, help='Optional file extension e.g. tpl')
+parser.add_argument('-c', type=str, help='Ccase to convert input into extension e.g. upper')
 args = parser.parse_args()
 
 pool = ThreadPool(THREADS)
@@ -75,6 +76,12 @@ words = wordlist.read().splitlines()
 urls = list()
 
 for word in words:
+
+    if args.c == 'upper':
+        word = word.upper()
+    if args.c == 'lower':
+        word = word.lower()
+
     if not word.startswith('/'):
         word = '/{0}'.format(word)
     urls.append('{0}{1}'.format(base_url,word))
