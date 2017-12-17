@@ -11,11 +11,12 @@ from termcolor import colored
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 THREADS = 12
-wordlist_file = os.path.dirname(os.path.realpath(__file__)) + '/complete_wordlist.txt'
+
+script_dir = os.path.dirname(os.path.realpath(__file__))
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-u', type=str, help='Base URL e.g. https://example.com')
-parser.add_argument('-w', type=str, help='Wordlist file e.g. wordlist.txt')
+parser.add_argument('-w', type=str, help='Wordlist file e.g. wordlist.txt', nargs='?', const=script_dir + '/complete_wordlist.txt')
 parser.add_argument('-e', type=str, help='Optional file extension e.g. tpl')
 parser.add_argument('-c', type=str, help='Case to convert input into extension e.g. upper')
 parser.add_argument('-r', type=str, help='Range of numbers to generate numeric filenames e.g. 1:300')
@@ -68,15 +69,18 @@ else:
     print('Please supply a base URL with -u')
     sys.exit(0)
 
-if args.w:
+print(args)
+try: 
+    args.w
     wordlist_file = args.w
+    wordlist = open(wordlist_file, encoding = "ISO-8859-1")
+    words = wordlist.read().splitlines()
+except NameError:
+    pass
 
 if args.r:
     number_range = args.r.split(':')
     words = range(int(number_range[0]),int(number_range[1]))
-if not wordlist_file:
-    wordlist = open(wordlist_file, encoding = "ISO-8859-1")
-    words = wordlist.read().splitlines()
 
 urls = list()
 
