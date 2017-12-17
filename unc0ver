@@ -17,7 +17,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-u', type=str, help='Base URL e.g. https://example.com')
 parser.add_argument('-w', type=str, help='Wordlist file e.g. wordlist.txt')
 parser.add_argument('-e', type=str, help='Optional file extension e.g. tpl')
-parser.add_argument('-c', type=str, help='Ccase to convert input into extension e.g. upper')
+parser.add_argument('-c', type=str, help='Case to convert input into extension e.g. upper')
+parser.add_argument('-r', type=str, help='Range of numbers to generate numeric filenames e.g. 1:300')
 args = parser.parse_args()
 
 pool = ThreadPool(THREADS)
@@ -70,12 +71,17 @@ else:
 if args.w:
     wordlist_file = args.w
 
-wordlist = open(wordlist_file, encoding = "ISO-8859-1")
-words = wordlist.read().splitlines()
+if args.r:
+    number_range = args.r.split(':')
+    words = range(int(number_range[0]),int(number_range[1]))
+if not wordlist_file:
+    wordlist = open(wordlist_file, encoding = "ISO-8859-1")
+    words = wordlist.read().splitlines()
 
 urls = list()
 
 for word in words:
+    word = str(word)
 
     if args.c == 'upper':
         word = word.upper()
