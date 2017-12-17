@@ -69,7 +69,6 @@ else:
     print('Please supply a base URL with -u')
     sys.exit(0)
 
-print(args)
 try: 
     args.w
     wordlist_file = args.w
