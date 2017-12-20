@@ -6,6 +6,8 @@ import requests
 import os
 import sys
 import urllib3
+from bs4 import BeautifulSoup
+
 from termcolor import colored
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -20,6 +22,7 @@ parser.add_argument('-w', type=str, help='Wordlist file e.g. wordlist.txt', narg
 parser.add_argument('-e', type=str, help='Optional file extension e.g. tpl')
 parser.add_argument('-c', type=str, help='Case to convert input into extension e.g. upper')
 parser.add_argument('-r', type=str, help='Range of numbers to generate numeric filenames e.g. 1:300')
+parser.add_argument('-n', type=str, help='Note field preference, defaults to Server header or Location on a 3xx e.g. title will return contents of <title> HTML tag instead. USefuo for sites who return 200 for everything')
 args = parser.parse_args()
 
 pool = ThreadPool(THREADS)
@@ -32,33 +35,43 @@ def make_request(url):
     try:
         r = requests.get(url, verify=False, allow_redirects=False)
         status_code = r.status_code
+
+        if args.n:
+            if args.n == 'title':
+                soup = BeautifulSoup(r.text, "html.parser")
+                title = soup.find('title').text
+                note = title
     except requests.exceptions.ConnectionError as e:
-        status_code = 0
+        status_code = 000
     except requests.exceptions.RequestException as e:
-        status_code = 0
+        status_code = 000
         
     if status_code in range(200,226,1):
         status_code = colored(status_code, 'green')
         if ('server' in r.headers):
-            note = r.headers['server']
+            if not args.n:
+                note = r.headers['server']
 
     if status_code in [301, 302, 303, 304, 305, 306, 307, 308]:
         if ('location' in r.headers):
             status_code = colored(status_code, 'yellow')
-            note = r.headers['Location']
+            if not args.n:
+                note = r.headers['Location']
 
     if status_code in range(500,511,1):
         status_code = colored(status_code, 'red')
         if ('server' in r.headers):
-            note = r.headers['server']
+            if not args.n:
+                note = r.headers['server']
 
     if status_code in [400,401,402,403,404]:
         status_code = colored(status_code, 'red')
         if ('server' in r.headers):
-            note = r.headers['server']
+            if not args.n:
+                note = r.headers['server']
 
-    print ('{0} {1} {2}'.format(status_code, url, note))
-    if status_code is not 0:
+    print ('{0} {1} {2}'.format(status_code, url, note).strip('\r\n'))
+    if status_code is not 000:
         return r
     else:
         return False
@@ -84,7 +97,7 @@ if args.r:
 urls = list()
 
 for word in words:
-    word = str(word)
+    word = str(word.strip())
 
     if args.c == 'upper':
         word = word.upper()
