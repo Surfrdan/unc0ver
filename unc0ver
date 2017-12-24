@@ -39,8 +39,9 @@ def make_request(url):
         if args.n:
             if args.n == 'title':
                 soup = BeautifulSoup(r.text, "html.parser")
-                title = soup.find('title').text
-                note = title
+                title = soup.find('title')
+                if title:
+                    note = title.text
     except requests.exceptions.ConnectionError as e:
         status_code = 000
     except requests.exceptions.RequestException as e:
