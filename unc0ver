@@ -16,13 +16,15 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 THREADS = 12
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
+wordlist_file = script_dir + '/complete_wordlist.txt'
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-u', type=str, help='Base URL e.g. https://example.com')
-parser.add_argument('-w', type=str, help='Wordlist file e.g. wordlist.txt', nargs='?', const=script_dir + '/complete_wordlist.txt')
+parser.add_argument('-w', type=str, help='Wordlist file e.g. wordlist.txt', nargs='?', const=wordlist_file)
 parser.add_argument('-e', type=str, help='Optional file extension e.g. tpl')
 parser.add_argument('-c', type=str, help='Case to convert input into extension e.g. upper')
 parser.add_argument('-r', type=str, help='Range of numbers to generate numeric filenames e.g. 1:300')
+parser.add_argument('-f', action='store_true', help='Follow Redirects off by default')
 parser.add_argument('-l', type=str, help='Rate Limit in requests per minute')
 parser.add_argument('-n', type=str, help='Note field preference, defaults to Server header or Location on a 3xx e.g. title will return contents of <title> HTML tag instead. USefuo for sites who return 200 for everything')
 args = parser.parse_args()
@@ -38,10 +40,14 @@ def make_request(url):
  
     if args.l:
         time.sleep(int(args.l))
-       
+
+    follow = False    
+    if args.f:
+        follow = True
+   
     note = ''
     try:
-        r = requests.get(url, verify=False, allow_redirects=False, headers=headers)
+        r = requests.get(url, verify=False, allow_redirects=follow, headers=headers)
         status_code = r.status_code
 
         if args.n:
@@ -50,6 +56,12 @@ def make_request(url):
                 title = soup.find('title')
                 if title:
                     note = title.text
+            if args.n == 'h1':
+                soup = BeautifulSoup(r.text, "html.parser")
+                title = soup.find('h1')
+                if title:
+                    note = title.text
+
     except requests.exceptions.ConnectionError as e:
         status_code = 000
     except requests.exceptions.RequestException as e:
