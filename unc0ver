@@ -4,6 +4,7 @@ import argparse
 from multiprocessing.dummy import Pool as ThreadPool
 import requests
 import os
+import datetime
 import time
 import sys
 import urllib3
@@ -30,6 +31,9 @@ parser.add_argument('-n', type=str, help='Note field preference, defaults to Ser
 args = parser.parse_args()
 
 pool = ThreadPool(THREADS)
+
+def timestamp():
+    return datetime.datetime.now().strftime("%X")
 
 def make_request(url):
     headers = {
@@ -66,7 +70,11 @@ def make_request(url):
         status_code = 000
     except requests.exceptions.RequestException as e:
         status_code = 000
-        
+    except Exception as e:
+        status_code = 000    
+    if status_code == 0:
+        status_code = 000   
+ 
     if status_code in range(200,226,1):
         status_code = colored(status_code, 'green')
         if ('server' in r.headers):
@@ -91,11 +99,20 @@ def make_request(url):
             if not args.n:
                 note = r.headers['server']
 
-    print ('{0} {1} {2}'.format(status_code, url, note).strip('\r\n'))
+    print ('{0} {1} {2} {3}'.format(status_code, timestamp(), url, note).strip('\r\n'))
     if status_code is not 000:
         return r
     else:
         return False
+
+banner = """ 
+                       ___
+     _   _ _ __   ___ / _ \__   _____ _ __
+    | | | | '_ \ / __| | | \ \ / / _ \ '__|
+    | |_| | | | | (__| |_| |\ V /  __/ |
+     \__,_|_| |_|\___|\___/  \_/ \___|_|
+"""
+print(colored(banner, 'magenta'))
 
 if args.u:
     base_url = args.u
