@@ -23,6 +23,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-u', type=str, help='Base URL e.g. https://example.com')
 parser.add_argument('-w', type=str, help='Wordlist file e.g. wordlist.txt', nargs='?', const=wordlist_file)
 parser.add_argument('-e', type=str, help='Optional file extension e.g. tpl')
+parser.add_argument('-p', type=str, help='Optional prefix e.g. "?" or "&" useful for querystrings')
 parser.add_argument('-c', type=str, help='Case to convert input into extension e.g. upper')
 parser.add_argument('-r', type=str, help='Range of numbers to generate numeric filenames e.g. 1:300')
 parser.add_argument('-f', action='store_true', help='Follow Redirects off by default')
@@ -140,9 +141,13 @@ for word in words:
         word = word.upper()
     if args.c == 'lower':
         word = word.lower()
-
-    if not word.startswith('/'):
-        word = '/{0}'.format(word)
+    
+    if args.p:
+        word = '{0}{1}'.format(args.p, word)
+    
+    # strip prefix slashes
+    if word.startswith('/'):
+        word = word[1:]
     urls.append('{0}{1}'.format(base_url,word))
 
 new_results = pool.map(make_request, urls)
