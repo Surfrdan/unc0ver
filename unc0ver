@@ -20,8 +20,9 @@ script_dir = os.path.dirname(os.path.realpath(__file__))
 wordlist_file = script_dir + '/complete_wordlist.txt'
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-u', type=str, help='Base URL e.g. https://example.com')
 parser.add_argument('-w', type=str, help='Wordlist file e.g. wordlist.txt', nargs='?', const=wordlist_file)
+parser.add_argument('-u', type=str, help='Base URL e.g. https://example.com')
+parser.add_argument('-b', action='store_true', help='Base URL e.g. https://example.com')
 parser.add_argument('-e', type=str, help='Optional file extension e.g. tpl')
 parser.add_argument('-p', type=str, help='Optional prefix e.g. "?" or "&" useful for querystrings')
 parser.add_argument('-c', type=str, help='Case to convert input into extension e.g. upper')
@@ -101,6 +102,9 @@ def make_request(url):
                 note = r.headers['server']
 
     print ('{0} {1} {2} {3}'.format(status_code, timestamp(), url, note).strip('\r\n'))
+
+    if args.b:
+        print (r.content)
     if status_code is not 000:
         return r
     else:
