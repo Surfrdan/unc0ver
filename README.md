@@ -1,7 +1,7 @@
 # unc0ver
 _An HTTP Recon tool_
 
-        unc0ver is a lightweight tool for performing HTTP reconnaissance. It is designed with the Unix principal of _do one thing and do it well._ It is constantly being updated so check back often for new features and bug fixes. Although I have included a wordlist, I highly recommend using unc0ver in combination with something like Daniel Miessler's excelent [SecLists](https://github.com/danielmiessler/SecLists) project in order to get the full benefit. 
+unc0ver is a lightweight tool for performing HTTP reconnaissance. It is designed with the Unix principal of _do one thing and do it well._ It is constantly being updated so check back often for new features and bug fixes. Although I have included a wordlist, I highly recommend using unc0ver in combination with something like Daniel Miessler's excelent [SecLists](https://github.com/danielmiessler/SecLists) project in order to get the full benefit. 
 
 ## Dependencies ##
 unc0ver is written for Python 3 and requires the following libraries to be present:
