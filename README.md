@@ -42,9 +42,11 @@ $ ./unc0ver -u http://www.example.com/ -w complete_wordlist.txt -c lower -e .php
 404 09:20:58 http://www.example.com/851.php Example Domain                                                                                      
 404 09:20:58 http://www.example.com/addtocart_.php Example Domain                                                                               
 404 09:20:58 http://www.example.com/212.php Example Domain                                                                                      
-404 09:20:58 http://www.example.com/itemid.php Example Domain                                                                                   ```
+404 09:20:58 http://www.example.com/itemid.php Example Domain
+```
 
 Here we utilise the grep command with an inverse match and 2 HTTP error codes to filter out unwanted results
+
 ```
 $ ./unc0ver -u http://www.example.com/ -w complete_wordlist.txt | grep -v -E "500|403"                                  
                                                                                                                                                 
@@ -58,5 +60,6 @@ $ ./unc0ver -u http://www.example.com/ -w complete_wordlist.txt | grep -v -E "50
 404 09:24:43 http://www.example.com/4975 ECS (lga/13A5)                                                                                         
 404 09:24:43 http://www.example.com/EmailChecker ECS (lga/131B)                                                                                 
 404 09:24:43 http://www.example.com/CARLOS ECS (lga/13CE)                                                                                       
-404 09:24:43 http://www.example.com/ItemId ECS (lga/137D)                                                                                       ```
+404 09:24:43 http://www.example.com/ItemId ECS (lga/137D)
+```
 
