@@ -116,6 +116,7 @@ banner = """
     | | | | '_ \ / __| | | \ \ / / _ \ '__|
     | |_| | | | | (__| |_| |\ V /  __/ |
      \__,_|_| |_|\___|\___/  \_/ \___|_|
+       An HTTP Recon Tool - By Surfrdan
 """
 print(colored(banner, 'magenta'))
 
