@@ -14,7 +14,9 @@ from termcolor import colored
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-THREADS = 12
+request_count = 0
+
+THREADS = 120
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 wordlist_file = script_dir + '/complete_wordlist.txt'
@@ -36,8 +38,10 @@ pool = ThreadPool(THREADS)
 
 def timestamp():
     return datetime.datetime.now().strftime("%X")
-
 def make_request(url):
+    global request_count
+    global file_count
+    request_count += 1
     headers = {
         'User-Agent': 'unc0ver HTTP Reconnaissance 0.1'
     }
@@ -100,11 +104,14 @@ def make_request(url):
         if ('server' in r.headers):
             if not args.n:
                 note = r.headers['server']
-
-    print ('{0} {1} {2} {3}'.format(status_code, timestamp(), url, note).strip('\r\n'))
+    counter = '[{0}/{1}]'.format(request_count,file_count)
+    print ('{0} {1} {2} {3} {4}'.format(status_code, timestamp(), counter, url, note).strip('\r\n'))
 
     if args.b:
-        print (r.content)
+        try:
+            print (r.content)
+        except Exception:
+            pass
     if status_code is not 000:
         return r
     else:
@@ -139,7 +146,9 @@ if args.r:
 
 urls = list()
 
+file_count= 0
 for word in words:
+    file_count += 1
     word = str(word.strip())
 
     if args.c == 'upper':
