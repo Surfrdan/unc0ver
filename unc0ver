@@ -56,6 +56,7 @@ def make_request(url):
         follow = True
    
     note = ''
+    r = None
     try:
         r = requests.get(url, verify=False, allow_redirects=follow, headers=headers)
         status_code = r.status_code
@@ -71,16 +72,12 @@ def make_request(url):
                 title = soup.find('h1')
                 if title:
                     note = title.text
-
-    except requests.exceptions.ConnectionError as e:
-        status_code = 000
-    except requests.exceptions.RequestException as e:
-        status_code = 000
     except Exception as e:
-        status_code = 000    
-    if status_code == 0:
-        status_code = 000   
- 
+        status_code = 0
+
+    if status_code in [0]:
+        status_code = colored('000', 'red')
+
     if status_code in range(200,226,1):
         status_code = colored(status_code, 'green')
         if ('server' in r.headers):
@@ -112,7 +109,7 @@ def make_request(url):
             print (r.content)
         except Exception:
             pass
-    if status_code is not 000:
+    if r is not None:
         return r
     else:
         return False
@@ -133,23 +130,22 @@ else:
     print('Please supply a base URL with -u')
     sys.exit(0)
 try: 
-    args.w
-    wordlist_file = args.w
-    wordlist = open(wordlist_file, encoding = "ISO-8859-1")
-    words = wordlist.read().splitlines()
+    if args.r:
+        number_range = args.r.split(':')
+        words = range(int(number_range[0]),int(number_range[1]))
+    else:
+        wordlist_file = args.w
+        wordlist = open(wordlist_file, encoding = "ISO-8859-1")
+        words = wordlist.read().splitlines()
 except NameError:
     pass
-
-if args.r:
-    number_range = args.r.split(':')
-    words = range(int(number_range[0]),int(number_range[1]))
 
 urls = list()
 
 file_count= 0
 for word in words:
     file_count += 1
-    word = str(word.strip())
+    word = str(word).strip()
 
     if args.c == 'upper':
         word = word.upper()
