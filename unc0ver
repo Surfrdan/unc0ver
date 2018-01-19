@@ -102,7 +102,8 @@ def make_request(url):
             if not args.n:
                 note = r.headers['server']
     counter = '[{0}/{1}]'.format(request_count,file_count)
-    print ('{0} {1} {2} {3} {4}'.format(status_code, timestamp(), counter, url, note).strip('\r\n'))
+    size = len(r.text)
+    print ('{0} {1} {2} {3} {4} {5}'.format(status_code, timestamp(), size, counter, url, note).strip('\r\n'))
 
     if args.b:
         try:
