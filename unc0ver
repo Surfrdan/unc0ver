@@ -60,15 +60,14 @@ def make_request(url):
     try:
         r = requests.get(url, verify=False, allow_redirects=follow, headers=headers)
         status_code = r.status_code
-
+        size = len(r.text)
         if args.n:
+            soup = BeautifulSoup(r.text, "html.parser")
             if args.n == 'title':
-                soup = BeautifulSoup(r.text, "html.parser")
                 title = soup.find('title')
                 if title:
                     note = title.text
             if args.n == 'h1':
-                soup = BeautifulSoup(r.text, "html.parser")
                 title = soup.find('h1')
                 if title:
                     note = title.text
@@ -77,6 +76,7 @@ def make_request(url):
 
     if status_code in [0]:
         status_code = colored('000', 'red')
+        size = '000'
 
     if status_code in range(200,226,1):
         status_code = colored(status_code, 'green')
@@ -102,18 +102,17 @@ def make_request(url):
             if not args.n:
                 note = r.headers['server']
     counter = '[{0}/{1}]'.format(request_count,file_count)
-    size = len(r.text)
-    print ('{0} {1} {2} {3} {4} {5}'.format(status_code, timestamp(), size, counter, url, note).strip('\r\n'))
+    print ('{0} {1} {2}B {3} {4} {5}'.format(status_code, timestamp(), size, counter, url, note).strip('\r\n'))
 
     if args.b:
         try:
             print (r.content)
         except Exception:
             pass
-    if r is not None:
-        return r
-    else:
-        return False
+#    if r is not None:
+#        return r
+#    else:
+#        return False
 
 banner = """ 
                        ___
@@ -161,6 +160,6 @@ for word in words:
         word = word[1:]
     urls.append('{0}{1}'.format(base_url,word))
 
-new_results = pool.map(make_request, urls)
+new_results = pool.map_async(make_request, urls)
 pool.close()
 pool.join()
