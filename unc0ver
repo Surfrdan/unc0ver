@@ -43,7 +43,9 @@ def make_request(url):
     global file_count
     request_count += 1
     headers = {
-        'User-Agent': 'unc0ver HTTP Reconnaissance 0.1'
+	#'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36'
+        #'User-Agent': 'unc0ver HTTP Reconnaissance 0.3'
+        'User-Agent': 'Something Else'
     }
     if args.e:
         url = '{0}{1}'.format(url,args.e)
@@ -113,10 +115,20 @@ def make_request(url):
             print (r.content)
         except Exception:
             pass
-#    if r is not None:
-#        return r
-#    else:
-#        return False
+
+def check_security_txt(base_url):
+	parsed_url = urllib3.util.parse_url(base_url)
+	url = 'http://'
+	if parsed_url[1]:
+		url = '{}://'.format(parsed_url[1])
+	url += parsed_url[2]
+	if parsed_url[3]:
+		url += ':{}'.format(parsed_url[3])	
+	url = '{0}/.well-known/security.txt'.format(url)
+	r = requests.get(url=url, verify=False)
+	if r.text:
+		print('security.txt file found for domain')
+		print(r.text)
 
 banner = """ 
                        ___
@@ -130,6 +142,7 @@ print(colored(banner, 'magenta'))
 
 if args.u:
     base_url = args.u
+    check_security_txt(base_url)
 else:
     print('Please supply a base URL with -u')
     sys.exit(0)
