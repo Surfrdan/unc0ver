@@ -43,9 +43,7 @@ def make_request(url):
     global file_count
     request_count += 1
     headers = {
-	#'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36'
-        #'User-Agent': 'unc0ver HTTP Reconnaissance 0.3'
-        'User-Agent': 'Something Else'
+        'User-Agent': 'unc0ver HTTP Reconnaissance 0.1'
     }
     if args.e:
         url = '{0}{1}'.format(url,args.e)
@@ -73,6 +71,12 @@ def make_request(url):
                 title = soup.find('h1')
                 if title:
                     note = title.text
+            if args.n == 'meta':
+                soup = BeautifulSoup(r.text, "html.parser")
+                title = soup.find("div", attrs={"id": "app"})
+                if title:
+                    note = title.text
+
     except Exception as e:
         status_code = 0
 
