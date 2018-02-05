@@ -159,9 +159,7 @@ def check_security_txt(base_url):
         else:
             url = '{0}/security.txt'.format(url)
             r = requests.get(url=url, verify=False)
-            print (r.headers['Content-Type'])
             if r.text and 'text/plain' == r.headers['Content-Type']:
-                print('foo')
                 security_txt = r.text
         if security_txt:
             print('security.txt file found for domain')
