@@ -5,6 +5,7 @@ from multiprocessing.dummy import Pool as ThreadPool
 import requests
 import os
 import datetime
+import random
 import time
 import sys
 import urllib3
@@ -19,7 +20,7 @@ request_count = 0
 THREADS = 120
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
-wordlist_file = script_dir + '/complete_wordlist.txt'
+wordlist_file = script_dir + '/wordlists/complete_wordlist.txt'
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-w', type=str, help='Wordlist file e.g. wordlist.txt', nargs='?', const=wordlist_file)
@@ -31,20 +32,40 @@ parser.add_argument('-c', type=str, help='Case to convert input into extension e
 parser.add_argument('-r', type=str, help='Range of numbers to generate numeric filenames e.g. 1:300')
 parser.add_argument('-f', action='store_true', help='Follow Redirects off by default')
 parser.add_argument('-l', type=str, help='Rate Limit in requests per minute')
-parser.add_argument('-n', type=str, help='Note field preference, defaults to Server header or Location on a 3xx e.g. title will return contents of <title> HTML tag instead. USefuo for sites who return 200 for everything')
+parser.add_argument('-n', type=str, help='Note field preference, defaults to Server header or Location on a 3xx options are title,h1,h2,meta')
 args = parser.parse_args()
 
 pool = ThreadPool(THREADS)
 
 def timestamp():
     return datetime.datetime.now().strftime("%X")
+
+def get_random_user_agent():
+    user_agents = [
+        'Mozilla/5.0 (compatible, MSIE 11, Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko',
+        'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)',
+        'Mozilla/4.0 (compatible; MSIE 10.0; Windows NT 6.1; Trident/5.0)',
+        'Mozilla/5.0 (Windows; U; Windows NT 6.1; rv:2.2) Gecko/20110201',
+        'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9a3pre) Gecko/20070330',
+        'Mozilla/5.0 (X11; ; Linux i686; rv:1.9.2.20) Gecko/20110805',
+        'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36',
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2227.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2227.1 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1',
+        'Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.75.14 (KHTML, like Gecko) Version/7.0.3 Safari/7046A194A',
+        'Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5355d Safari/8536.25',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/537.13+ (KHTML, like Gecko) Version/5.1.7 Safari/534.57.2'
+    ]
+    return random.choice(user_agents)
+
 def make_request(url):
     global request_count
     global file_count
     request_count += 1
+    user_agent = get_random_user_agent()
     headers = {
-        'User-Agent': 'unc0ver HTTP Reconnaissance 0.1'
-        #'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36'
+        'User-Agent': user_agent 
     }
     if args.e:
         url = '{0}{1}'.format(url,args.e)
@@ -120,10 +141,6 @@ def make_request(url):
             print (r.content)
         except Exception:
             pass
-#    if r is not None:
-#        return r
-#    else:
-#        return False
 
 banner = """ 
                        ___
@@ -166,7 +183,6 @@ for word in words:
     if args.p:
         word = '{0}{1}'.format(args.p, word)
     
-    # strip prefix slashes
     if word.startswith('/'):
         word = word[1:]
     urls.append('{0}{1}'.format(base_url,word))
