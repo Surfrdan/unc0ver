@@ -143,30 +143,33 @@ def make_request(url):
             pass
 
 def check_security_txt(base_url):
-    security_txt = None
-    parsed_url = urllib3.util.parse_url(base_url)
-    url = 'http://'
-    if parsed_url[1]:
-        url = '{}://'.format(parsed_url[1])
-    url += parsed_url[2]
-    if parsed_url[3]:
-        url += ':{}'.format(parsed_url[3])	
-    url = '{0}/.well-known/security.txt'.format(url)
-    r = requests.get(url=url, verify=False)
-    if r.text and 'text/plain' == r.headers['Content-Type']:
-        security_txt = r.text
-    else:
-        url = '{0}/security.txt'.format(url)
+    try:
+        security_txt = None
+        parsed_url = urllib3.util.parse_url(base_url)
+        url = 'http://'
+        if parsed_url[1]:
+            url = '{}://'.format(parsed_url[1])
+        url += parsed_url[2]
+        if parsed_url[3]:
+            url += ':{}'.format(parsed_url[3])	
+        url = '{0}/.well-known/security.txt'.format(url)
         r = requests.get(url=url, verify=False)
-        print (r.headers['Content-Type'])
         if r.text and 'text/plain' == r.headers['Content-Type']:
-            print('foo')
             security_txt = r.text
-    if security_txt:
-        print('security.txt file found for domain')
-        print(security_txt)
-        input("Press Enter to continue...")
-
+        else:
+            url = '{0}/security.txt'.format(url)
+            r = requests.get(url=url, verify=False)
+            print (r.headers['Content-Type'])
+            if r.text and 'text/plain' == r.headers['Content-Type']:
+                print('foo')
+                security_txt = r.text
+        if security_txt:
+            print('security.txt file found for domain')
+            print(security_txt)
+            input("Press Enter to continue...")
+    except Exception:
+        pass;
+      
 banner = """ 
                        ___
      _   _ _ __   ___ / _ \__   _____ _ __
