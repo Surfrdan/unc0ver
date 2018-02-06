@@ -80,7 +80,7 @@ def make_request(url):
     note = ''
     r = None
     try:
-        r = requests.get(url, verify=False, allow_redirects=follow, headers=headers, timeout=3)
+        r = requests.get(url, verify=False, allow_redirects=follow, headers=headers)
         status_code = r.status_code
         size = len(r.text)
         if args.n:
