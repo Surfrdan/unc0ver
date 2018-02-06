@@ -80,7 +80,7 @@ def make_request(url):
     note = ''
     r = None
     try:
-        r = requests.get(url, verify=False, allow_redirects=follow, headers=headers)
+        r = requests.get(url, verify=False, allow_redirects=follow, headers=headers, timeout=3)
         status_code = r.status_code
         size = len(r.text)
         if args.n:
@@ -153,12 +153,12 @@ def check_security_txt(base_url):
         if parsed_url[3]:
             url += ':{}'.format(parsed_url[3])	
         url = '{0}/.well-known/security.txt'.format(url)
-        r = requests.get(url=url, verify=False)
+        r = requests.get(url=url, verify=False, timeout=3)
         if r.text and 'text/plain' == r.headers['Content-Type']:
             security_txt = r.text
         else:
             url = '{0}/security.txt'.format(url)
-            r = requests.get(url=url, verify=False)
+            r = requests.get(url=url, verify=False, timeout=3)
             if r.text and 'text/plain' == r.headers['Content-Type']:
                 security_txt = r.text
         if security_txt:
@@ -180,7 +180,7 @@ print(colored(banner, 'magenta'))
 
 if args.u:
     base_url = args.u
-    check_security_txt(base_url)
+    #check_security_txt(base_url)
 else:
     print('Please supply a base URL with -u')
     sys.exit(0)
