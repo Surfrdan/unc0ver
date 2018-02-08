@@ -7,36 +7,45 @@ import os
 import datetime
 import random
 import time
-import sys
 import urllib3
 from bs4 import BeautifulSoup
-
 from termcolor import colored
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-request_count = 0
-timeout = 10 
-threads = 120
-pool = ThreadPool(threads)
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
-wordlist_file = script_dir + '/wordlists/complete_wordlist.txt'
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-w', type=str, help='Wordlist file e.g. wordlist.txt', nargs='?', const=wordlist_file)
-parser.add_argument('-s', type=int, help='Timeout in seconds')
-parser.add_argument('-t', type=int, help='Number of threads')
-parser.add_argument('-u', type=str, help='Base URL e.g. https://example.com')
-parser.add_argument('-b', action='store_true', help='Include body in output')
-parser.add_argument('-e', type=str, help='Optional file extension e.g. tpl')
-parser.add_argument('-p', type=str, help='Optional prefix e.g. "?" or "&" useful for querystrings')
-parser.add_argument('-c', type=str, help='Case to convert input into extension e.g. upper')
-parser.add_argument('-r', type=str, help='Range of numbers to generate numeric filenames e.g. 1:300')
-parser.add_argument('-f', action='store_true', help='Follow Redirects off by default')
-parser.add_argument('-l', type=str, help='Rate Limit in requests per minute')
-parser.add_argument('-n', type=str, help='Note field preference, defaults to Server header or Location on a 3xx options are title,h1,h2,meta')
-args = parser.parse_args()
+def parse_args():
+    arg_w_help = 'Wordlist file e.g. wordlist.txt'
+    arg_s_help = 'Timeout in seconds'
+    arg_t_help = 'Number of threads to use. Defaults to 120 which can be too much on slow machines or connections'
+    arg_u_help = 'Base URL e.g. https://example.com'
+    arg_b_help = 'Include body in output'
+    arg_e_help = 'Optional file extension e.g. .tpl'
+    arg_p_help = 'Optional prefix e.g. "?" or "&" useful for querystring or directory fuzzing'
+    arg_c_help = 'Case to convert input into extension e.g. upper'
+    arg_r_help = 'Case to convert input into extension e.g. upper'
+    arg_i_help = 'list of HTTP response codes to ignore. Defaults to 404. Set this to blank to include 404s or specify a list of comma seperated codes to ignore'
+    arg_f_help = 'Follow Redirects off by default'
+    arg_l_help = 'Rate Limit in requests per minute'
+    arg_n_help = 'Note field preference, defaults to Server header or Location on a 3xx options are title,h1,h2,meta'
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-w', '--wordlist', type=str, help=arg_w_help, nargs='?', default=script_dir + '/wordlists/complete_wordlist.txt')
+    parser.add_argument('-s', '--timeout', type=int, help=arg_s_help, default=10)
+    parser.add_argument('-t', '--threads', type=int, help=arg_t_help, default=120)
+    parser.add_argument('-u', '--base_url', type=str, help=arg_u_help, required=True)
+    parser.add_argument('-b', '--body', action='store_true', help=arg_b_help, default=False)
+    parser.add_argument('-e', '--extension', type=str, help=arg_e_help, default=False)
+    parser.add_argument('-p', '--prefix', type=str, help=arg_p_help, default=False)
+    parser.add_argument('-c', '--case', type=str, help=arg_c_help, default=False)
+    parser.add_argument('-r', '--range', type=str, help=arg_r_help, default=False)
+    parser.add_argument('-i', '--ignore', type=str, help=arg_i_help, default=[404])
+    parser.add_argument('-f', '--follow', action='store_true', help=arg_f_help, default=False)
+    parser.add_argument('-l', '--ratelimit', type=int, help=arg_l_help, default=0)
+    parser.add_argument('-n', '--note', type=str, help=arg_n_help, default=False)
+    return parser.parse_args()
 
 def print_banner():
     banner = """ 
@@ -74,45 +83,41 @@ def get_random_user_agent():
 
 def make_request(url):
     global request_count
-    global file_count
-    global timeout
     request_count += 1
     user_agent = get_random_user_agent()
     headers = {
         'User-Agent': user_agent 
     }
-    if args.e:
-        url = '{0}{1}'.format(url,args.e)
+    if args.extension:
+        url = '{0}{1}'.format(url,args.extension)
 
-    if args.l:
-        time.sleep(int(args.l))
-
-    follow = False    
-    if args.f:
-        follow = True
+    if args.ratelimit:
+        time.sleep(args.ratelimit)
 
     note = ''
     r = None
     try:
-        r = requests.get(url, verify=False, allow_redirects=follow, headers=headers, timeout=timeout)
+        r = requests.get(url, verify=False, allow_redirects=args.follow, headers=headers, timeout=args.timeout)
         status_code = r.status_code
+
+        if (status_code in args.ignore):
+            return
         size = len(r.text)
-        if args.n:
+        if args.note:
             soup = BeautifulSoup(r.text, "html.parser")
-            if args.n == 'title':
+            if args.note == 'title':
                 title = soup.find('title')
                 if title:
                     note = title.text
-            if args.n == 'h1':
+            if args.note == 'h1':
                 title = soup.find('h1')
                 if title:
                     note = title.text
-            if args.n == 'meta':
+            if args.note == 'meta':
                 soup = BeautifulSoup(r.text, "html.parser")
                 title = soup.find("div", attrs={"id": "app"})
                 if title:
                     note = title.text
-
     except Exception as e:
         status_code = 0
 
@@ -123,25 +128,25 @@ def make_request(url):
     if status_code in range(200,226,1):
         status_code = colored(status_code, 'green')
         if ('server' in r.headers):
-            if not args.n:
+            if not args.note:
                 note = r.headers['server']
 
     if status_code in [301, 302, 303, 304, 305, 306, 307, 308]:
         if ('location' in r.headers):
             status_code = colored(status_code, 'yellow')
-            if not args.n:
+            if not args.note:
                 note = r.headers['Location']
 
     if status_code in range(500,511,1):
         status_code = colored(status_code, 'red')
         if ('server' in r.headers):
-            if not args.n:
+            if not args.note:
                 note = r.headers['server']
 
     if status_code in [400,401,402,403,404]:
         status_code = colored(status_code, 'red')
         if ('server' in r.headers):
-            if not args.n:
+            if not args.note:
                 note = r.headers['server']
     counter = '[{0}/{1}]'.format(request_count,file_count)
     content_type = 'none'
@@ -149,24 +154,24 @@ def make_request(url):
         content_type = r.headers['Content-Type']
 
     response_time = None
-    if (r.elapsed.total_seconds() > timeout - 2):
+    if (r.elapsed.total_seconds() > args.timeout - 2):
         response_time = colored(str(int(r.elapsed.total_seconds())), 'red')
     else:
         response_time = colored(str(int(r.elapsed.total_seconds())), 'green')
 
     print ('{0} {1}s {2}B {3} {4} {5} {6} {7}'.format(status_code, response_time, timestamp(), size, counter, content_type, url, note).strip('\r\n'))
 
-    if args.b:
+    if args.body:
         try:
             print (r.content)
         except Exception:
             pass
 
-def check_security_txt(base_url):
-    global timeout
+def check_security_txt():
     try:
         security_txt = None
-        parsed_url = urllib3.util.parse_url(base_url)
+        valid_security_txt = False
+        parsed_url = urllib3.util.parse_url(args.base_url)
         url = 'http://'
         if parsed_url[1]:
             url = '{}://'.format(parsed_url[1])
@@ -174,41 +179,38 @@ def check_security_txt(base_url):
         if parsed_url[3]:
             url += ':{}'.format(parsed_url[3])	
         url = '{0}/.well-known/security.txt'.format(url)
-        r = requests.get(url=url, verify=False, timeout=timeout)
-        if r.text and 'text/plain' == r.headers['Content-Type']:
+        r = requests.get(url=url, verify=False, timeout=args.timeout)
+        if r.text:
             security_txt = r.text
         else:
             url = '{0}/security.txt'.format(url)
-            r = requests.get(url=url, verify=False, timeout=timeout)
-            if r.text and 'text/plain' == r.headers['Content-Type']:
+            r = requests.get(url=url, verify=False, timeout=args.timeout)
+            if r.text:
                 security_txt = r.text
         if security_txt:
-            print('security.txt file found for domain')
-            print(security_txt)
-            input("Press Enter to continue...")
+            for line in security_txt.splitlines():
+                if line.startswith('Contact:'):
+                    valid_security_txt = True
+            if security_txt and valid_security_txt:
+                print('security.txt file found for domain')
+                print(security_txt)
+                input("Press Enter to continue...")
+        else:
+            pass
     except Exception:
-        pass;
+        pass
 
 
 print_banner()
+args = parse_args()
+check_security_txt()
 
-if args.t:
-    threads = args.t
-if args.s:
-    timeout = args.s
-if args.u:
-    base_url = args.u
-    #check_security_txt(base_url)
-else:
-    print('Please supply a base URL with -u')
-    sys.exit(0)
 try:
-    if args.r:
-        number_range = args.r.split(':')
+    if args.range:
+        number_range = args.range.split(':')
         words = range(int(number_range[0]),int(number_range[1]))
     else:
-        wordlist_file = args.w
-        wordlist = open(wordlist_file, encoding = "ISO-8859-1")
+        wordlist = open(args.wordlist, encoding = "ISO-8859-1")
         words = wordlist.read().splitlines()
 except NameError:
     pass
@@ -220,18 +222,20 @@ for word in words:
     file_count += 1
     word = str(word).strip()
 
-    if args.c == 'upper':
+    if args.case == 'upper':
         word = word.upper()
-    if args.c == 'lower':
+    if args.case == 'lower':
         word = word.lower()
     
-    if args.p:
-        word = '{0}{1}'.format(args.p, word)
+    if args.prefix:
+        word = '{0}{1}'.format(args.prefix, word)
     
     if word.startswith('/'):
         word = word[1:]
-    urls.append('{0}{1}'.format(base_url,word))
+    urls.append('{0}{1}'.format(args.base_url,word))
 
+request_count = 0
+pool = ThreadPool(args.threads)
 new_results = pool.map_async(make_request, urls)
 pool.close()
 pool.join()
