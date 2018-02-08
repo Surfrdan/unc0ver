@@ -17,14 +17,16 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 request_count = 0
 timeout = 10 
-THREADS = 120
+threads = 120
+pool = ThreadPool(threads)
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 wordlist_file = script_dir + '/wordlists/complete_wordlist.txt'
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-w', type=str, help='Wordlist file e.g. wordlist.txt', nargs='?', const=wordlist_file)
-parser.add_argument('-t', type=int, help='Timeout in seconds')
+parser.add_argument('-s', type=int, help='Timeout in seconds')
+parser.add_argument('-t', type=int, help='Number of threads')
 parser.add_argument('-u', type=str, help='Base URL e.g. https://example.com')
 parser.add_argument('-b', action='store_true', help='Include body in output')
 parser.add_argument('-e', type=str, help='Optional file extension e.g. tpl')
@@ -36,7 +38,16 @@ parser.add_argument('-l', type=str, help='Rate Limit in requests per minute')
 parser.add_argument('-n', type=str, help='Note field preference, defaults to Server header or Location on a 3xx options are title,h1,h2,meta')
 args = parser.parse_args()
 
-pool = ThreadPool(THREADS)
+def print_banner():
+    banner = """ 
+                           ___
+         _   _ _ __   ___ / _ \__   _____ _ __
+        | | | | '_ \ / __| | | \ \ / / _ \ '__|
+        | |_| | | | | (__| |_| |\ V /  __/ |
+         \__,_|_| |_|\___|\___/  \_/ \___|_|
+           An HTTP Recon Tool - By Surfrdan
+    """
+    print(colored(banner, 'magenta'))
 
 
 def timestamp():
@@ -64,7 +75,7 @@ def get_random_user_agent():
 def make_request(url):
     global request_count
     global file_count
-    global timeout 
+    global timeout
     request_count += 1
     user_agent = get_random_user_agent()
     headers = {
@@ -72,14 +83,14 @@ def make_request(url):
     }
     if args.e:
         url = '{0}{1}'.format(url,args.e)
- 
+
     if args.l:
         time.sleep(int(args.l))
 
     follow = False    
     if args.f:
         follow = True
-   
+
     note = ''
     r = None
     try:
@@ -135,9 +146,15 @@ def make_request(url):
     counter = '[{0}/{1}]'.format(request_count,file_count)
     content_type = 'none'
     if 'Content-Type' in r.headers:
-    	content_type = r.headers['Content-Type']
+        content_type = r.headers['Content-Type']
 
-    print ('{0} {1} {2}B {3} {4} {5} {6}'.format(status_code, timestamp(), size, counter, content_type, url, note).strip('\r\n'))
+    response_time = None
+    if (r.elapsed.total_seconds() > timeout - 2):
+        response_time = colored(str(int(r.elapsed.total_seconds())), 'red')
+    else:
+        response_time = colored(str(int(r.elapsed.total_seconds())), 'green')
+
+    print ('{0} {1}s {2}B {3} {4} {5} {6} {7}'.format(status_code, response_time, timestamp(), size, counter, content_type, url, note).strip('\r\n'))
 
     if args.b:
         try:
@@ -171,27 +188,21 @@ def check_security_txt(base_url):
             input("Press Enter to continue...")
     except Exception:
         pass;
-      
-banner = """ 
-                       ___
-     _   _ _ __   ___ / _ \__   _____ _ __
-    | | | | '_ \ / __| | | \ \ / / _ \ '__|
-    | |_| | | | | (__| |_| |\ V /  __/ |
-     \__,_|_| |_|\___|\___/  \_/ \___|_|
-       An HTTP Recon Tool - By Surfrdan
-"""
-print(colored(banner, 'magenta'))
+
+
+print_banner()
 
 if args.t:
-    timeout = args.t
-
+    threads = args.t
+if args.s:
+    timeout = args.s
 if args.u:
     base_url = args.u
     #check_security_txt(base_url)
 else:
     print('Please supply a base URL with -u')
     sys.exit(0)
-try: 
+try:
     if args.r:
         number_range = args.r.split(':')
         words = range(int(number_range[0]),int(number_range[1]))
