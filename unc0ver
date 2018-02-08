@@ -16,7 +16,7 @@ from termcolor import colored
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 request_count = 0
-
+timeout = 10 
 THREADS = 120
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -24,6 +24,7 @@ wordlist_file = script_dir + '/wordlists/complete_wordlist.txt'
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-w', type=str, help='Wordlist file e.g. wordlist.txt', nargs='?', const=wordlist_file)
+parser.add_argument('-t', type=int, help='Timeout in seconds')
 parser.add_argument('-u', type=str, help='Base URL e.g. https://example.com')
 parser.add_argument('-b', action='store_true', help='Include body in output')
 parser.add_argument('-e', type=str, help='Optional file extension e.g. tpl')
@@ -36,6 +37,7 @@ parser.add_argument('-n', type=str, help='Note field preference, defaults to Ser
 args = parser.parse_args()
 
 pool = ThreadPool(THREADS)
+
 
 def timestamp():
     return datetime.datetime.now().strftime("%X")
@@ -62,6 +64,7 @@ def get_random_user_agent():
 def make_request(url):
     global request_count
     global file_count
+    global timeout 
     request_count += 1
     user_agent = get_random_user_agent()
     headers = {
@@ -80,7 +83,7 @@ def make_request(url):
     note = ''
     r = None
     try:
-        r = requests.get(url, verify=False, allow_redirects=follow, headers=headers, timeout=3)
+        r = requests.get(url, verify=False, allow_redirects=follow, headers=headers, timeout=timeout)
         status_code = r.status_code
         size = len(r.text)
         if args.n:
@@ -143,6 +146,7 @@ def make_request(url):
             pass
 
 def check_security_txt(base_url):
+    global timeout
     try:
         security_txt = None
         parsed_url = urllib3.util.parse_url(base_url)
@@ -153,12 +157,12 @@ def check_security_txt(base_url):
         if parsed_url[3]:
             url += ':{}'.format(parsed_url[3])	
         url = '{0}/.well-known/security.txt'.format(url)
-        r = requests.get(url=url, verify=False, timeout=3)
+        r = requests.get(url=url, verify=False, timeout=timeout)
         if r.text and 'text/plain' == r.headers['Content-Type']:
             security_txt = r.text
         else:
             url = '{0}/security.txt'.format(url)
-            r = requests.get(url=url, verify=False, timeout=3)
+            r = requests.get(url=url, verify=False, timeout=timeout)
             if r.text and 'text/plain' == r.headers['Content-Type']:
                 security_txt = r.text
         if security_txt:
@@ -177,6 +181,9 @@ banner = """
        An HTTP Recon Tool - By Surfrdan
 """
 print(colored(banner, 'magenta'))
+
+if args.t:
+    timeout = args.t
 
 if args.u:
     base_url = args.u
