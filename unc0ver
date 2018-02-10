@@ -12,9 +12,8 @@ from bs4 import BeautifulSoup
 from termcolor import colored
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-
 script_dir = os.path.dirname(os.path.realpath(__file__))
+status_tally = dict() 
 
 def parse_args():
     arg_w_help = 'Wordlist file e.g. wordlist.txt'
@@ -26,7 +25,7 @@ def parse_args():
     arg_p_help = 'Optional prefix e.g. "?" or "&" useful for querystring or directory fuzzing'
     arg_c_help = 'Case to convert input into extension e.g. upper'
     arg_r_help = 'Case to convert input into extension e.g. upper'
-    arg_i_help = 'list of HTTP response codes to ignore. Defaults to 404. Set this to blank to include 404s or specify a list of comma seperated codes to ignore'
+    arg_i_help = 'list of HTTP response codes to ignore. Defaults to 403,404. Set this to blank to include 404s or 403s or specify a list of comma seperated codes to ignore'
     arg_f_help = 'Follow Redirects off by default'
     arg_l_help = 'Rate Limit in requests per minute'
     arg_n_help = 'Note field preference, defaults to Server header or Location on a 3xx options are title,h1,h2,meta'
@@ -41,7 +40,7 @@ def parse_args():
     parser.add_argument('-p', '--prefix', type=str, help=arg_p_help, default=False)
     parser.add_argument('-c', '--case', type=str, help=arg_c_help, default=False)
     parser.add_argument('-r', '--range', type=str, help=arg_r_help, default=False)
-    parser.add_argument('-i', '--ignore', type=str, help=arg_i_help, default=[404])
+    parser.add_argument('-i', '--ignore', type=str, help=arg_i_help, default=[403,404])
     parser.add_argument('-f', '--follow', action='store_true', help=arg_f_help, default=False)
     parser.add_argument('-l', '--ratelimit', type=int, help=arg_l_help, default=0)
     parser.add_argument('-n', '--note', type=str, help=arg_n_help, default=False)
@@ -57,7 +56,6 @@ def print_banner():
            An HTTP Recon Tool - By Surfrdan
     """
     print(colored(banner, 'magenta'))
-
 
 def timestamp():
     return datetime.datetime.now().strftime("%X")
@@ -81,6 +79,15 @@ def get_random_user_agent():
     ]
     return random.choice(user_agents)
 
+def tally_status(status_code):
+    global status_tally
+    status_code = str(status_code)
+    status_tally[status_code] += 1
+
+def get_status_tally():
+    for code, count in status_tally.items():
+        print("{0} {1}".format(code, count))
+
 def make_request(url):
     global request_count
     request_count += 1
@@ -99,7 +106,6 @@ def make_request(url):
     try:
         r = requests.get(url, verify=False, allow_redirects=args.follow, headers=headers, timeout=args.timeout)
         status_code = r.status_code
-
         if (status_code in args.ignore):
             return
         size = len(r.text)
@@ -118,9 +124,10 @@ def make_request(url):
                 title = soup.find("div", attrs={"id": "app"})
                 if title:
                     note = title.text
-    except Exception as e:
+    except (ConnectionError, ProxyError, SSLError, Timeout) as e:
         status_code = 0
 
+    #tally_status(status_code)
     if status_code in [0]:
         status_code = colored('000', 'red')
         size = '000'
@@ -159,7 +166,7 @@ def make_request(url):
     else:
         response_time = colored(str(int(r.elapsed.total_seconds())), 'green')
 
-    print ('{0} {1}s {2}B {3} {4} {5} {6} {7}'.format(status_code, response_time, timestamp(), size, counter, content_type, url, note).strip('\r\n'))
+    print ('{0} {1} {2}s {3}B {4} {5} {6} {7}'.format(status_code, timestamp(), response_time, size, counter, content_type, url, note).strip('\r\n'))
 
     if args.body:
         try:
@@ -216,8 +223,8 @@ except NameError:
     pass
 
 urls = list()
+file_count = 0
 
-file_count= 0
 for word in words:
     file_count += 1
     word = str(word).strip()
@@ -239,3 +246,4 @@ pool = ThreadPool(args.threads)
 new_results = pool.map_async(make_request, urls)
 pool.close()
 pool.join()
+get_status_tally()
