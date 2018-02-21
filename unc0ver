@@ -29,6 +29,7 @@ def parse_args():
     arg_f_help = 'Follow Redirects off by default'
     arg_l_help = 'Rate Limit in requests per minute'
     arg_n_help = 'Note field preference, defaults to Server header or Location on a 3xx options are title,h1,h2,meta'
+    arg_N_help = 'Haystack search. If value found in response (haystack), "NEEDLE" is added to report for easy grepping of reflected values'
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-w', '--wordlist', type=str, help=arg_w_help, nargs='?', default=script_dir + '/wordlists/complete_wordlist.txt')
@@ -44,6 +45,7 @@ def parse_args():
     parser.add_argument('-f', '--follow', action='store_true', help=arg_f_help, default=False)
     parser.add_argument('-l', '--ratelimit', type=int, help=arg_l_help, default=0)
     parser.add_argument('-n', '--note', type=str, help=arg_n_help, default=False)
+    parser.add_argument('-N', '--needle', type=str, help=arg_N_help, default=False)
     return parser.parse_args()
 
 def print_banner():
@@ -103,6 +105,7 @@ def make_request(url):
 
     note = ''
     r = None
+    needle = None
     try:
         r = requests.get(url, verify=False, allow_redirects=args.follow, headers=headers, timeout=args.timeout)
         status_code = r.status_code
@@ -124,6 +127,9 @@ def make_request(url):
                 title = soup.find("div", attrs={"id": "app"})
                 if title:
                     note = title.text
+        if args.needle:
+            if args.needle in r.text:
+                needle = 'NEEDLE'
     except (ConnectionError, ProxyError, SSLError, Timeout) as e:
         status_code = 0
 
@@ -166,7 +172,7 @@ def make_request(url):
     else:
         response_time = colored(str(int(r.elapsed.total_seconds())), 'green')
 
-    print ('{0} {1} {2}s {3}B {4} {5} {6} {7}'.format(status_code, timestamp(), response_time, size, counter, content_type, url, note).strip('\r\n'))
+    print ('{0} {1} {2}s {3}B {4} {5} {6} {7} {8}'.format(status_code, timestamp(), response_time, size, counter, content_type, url, note, needle).strip('\r\n'))
 
     if args.body:
         try:
