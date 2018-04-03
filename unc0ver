@@ -41,7 +41,7 @@ def parse_args():
     parser.add_argument('-p', '--prefix', type=str, help=arg_p_help, default=False)
     parser.add_argument('-c', '--case', type=str, help=arg_c_help, default=False)
     parser.add_argument('-r', '--range', type=str, help=arg_r_help, default=False)
-    parser.add_argument('-i', '--ignore', type=str, help=arg_i_help, default=[403,404,502,503,504])
+    parser.add_argument('-i', '--ignore', type=str, help=arg_i_help, default=[404,502,503,504])
     parser.add_argument('-f', '--follow', action='store_true', help=arg_f_help, default=False)
     parser.add_argument('-l', '--ratelimit', type=int, help=arg_l_help, default=0)
     parser.add_argument('-n', '--note', type=str, help=arg_n_help, default=False)
@@ -156,7 +156,7 @@ def make_request(url):
             if not args.note:
                 note = r.headers['server']
 
-    if status_code in [400,401,402,403,404]:
+    if status_code in [400,401,402,404]:
         status_code = colored(status_code, 'red')
         if ('server' in r.headers):
             if not args.note:
@@ -172,7 +172,7 @@ def make_request(url):
     else:
         response_time = colored(str(int(r.elapsed.total_seconds())), 'green')
 
-    print ('{0} {1} {2}s {3}B {4} {5} {6} {7} {8}'.format(status_code, timestamp(), response_time, size, counter, content_type, url, note, needle).strip('\r\n'))
+    print ('{0} {1} {2}s {3}B {4} {5} {6} {7} {8}'.format(status_code, timestamp(), response_time, size, counter, content_type, url, note.strip(), needle).strip('\r\n'))
 
     if args.body:
         try:
@@ -217,6 +217,9 @@ def check_security_txt():
 print_banner()
 args = parse_args()
 check_security_txt()
+
+if args.ignore:
+    args.ignore = [int(x) for x in  args.ignore.split(',')]
 
 try:
     if args.range:
