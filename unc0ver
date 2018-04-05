@@ -156,7 +156,7 @@ def make_request(url):
             if not args.note:
                 note = r.headers['server']
 
-    if status_code in [400,401,402,404]:
+    if status_code in [400,401,402,403,404]:
         status_code = colored(status_code, 'red')
         if ('server' in r.headers):
             if not args.note:
