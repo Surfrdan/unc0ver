@@ -4,6 +4,7 @@ import argparse
 from multiprocessing.dummy import Pool as ThreadPool
 import requests
 import os
+import sys
 import datetime
 import random
 import time
@@ -91,7 +92,7 @@ def get_status_tally():
         print("{0} {1}".format(code, count))
 
 def make_request(url):
-    global request_count
+    global request_count, file_count, args
     request_count += 1
     user_agent = get_random_user_agent()
     headers = {
@@ -132,7 +133,6 @@ def make_request(url):
                 needle = 'NEEDLE'
     except (ConnectionError, ProxyError, SSLError, Timeout) as e:
         status_code = 0
-
     #tally_status(status_code)
     if status_code in [0]:
         status_code = colored('000', 'red')
@@ -213,46 +213,58 @@ def check_security_txt():
     except Exception:
         pass
 
+def read_wordlist():
+    try:
+        if args.range:
+            number_range = args.range.split(':')
+            words = range(int(number_range[0]),int(number_range[1]))
+        else:
+            wordlist = open(args.wordlist, encoding = "ISO-8859-1")
+            words = wordlist.read().splitlines()
+            if words:
+                return words
+            else:
+                print("Empty wordlist supplied.. nothing to fuzz with")
+                return []
+    except NameError:
+        pass
 
-print_banner()
-args = parse_args()
-check_security_txt()
+def main_loop(words, args):
+    global file_count
+    urls = list()
+    for word in words:
+        file_count += 1
+        word = str(word).strip()
 
-if args.ignore:
-    args.ignore = [int(x) for x in  args.ignore.split(',')]
+        if args.case == 'upper':
+            word = word.upper()
+        if args.case == 'lower':
+            word = word.lower()
+    
+        if args.prefix:
+            word = '{0}{1}'.format(args.prefix, word)
+    
+        if word.startswith('/'):
+            word = word[1:]
+        urls.append('{0}{1}'.format(args.base_url,word))
+
+    pool = ThreadPool(args.threads)
+    new_results = pool.map_async(make_request, urls)
+    pool.close()
+    pool.join()
+    get_status_tally()
+    return True
 
 try:
-    if args.range:
-        number_range = args.range.split(':')
-        words = range(int(number_range[0]),int(number_range[1]))
-    else:
-        wordlist = open(args.wordlist, encoding = "ISO-8859-1")
-        words = wordlist.read().splitlines()
-except NameError:
-    pass
+    file_count = 0
+    request_count = 0
+    print_banner()
+    args = parse_args()
+    if args.ignore:
+        args.ignore = [int(x) for x in  args.ignore.split(',')]
 
-urls = list()
-file_count = 0
-
-for word in words:
-    file_count += 1
-    word = str(word).strip()
-
-    if args.case == 'upper':
-        word = word.upper()
-    if args.case == 'lower':
-        word = word.lower()
-    
-    if args.prefix:
-        word = '{0}{1}'.format(args.prefix, word)
-    
-    if word.startswith('/'):
-        word = word[1:]
-    urls.append('{0}{1}'.format(args.base_url,word))
-
-request_count = 0
-pool = ThreadPool(args.threads)
-new_results = pool.map_async(make_request, urls)
-pool.close()
-pool.join()
-get_status_tally()
+    check_security_txt()
+    words = read_wordlist()
+    main_loop(words, args)
+except KeyboardInterrupt:
+    sys.exit(1)
