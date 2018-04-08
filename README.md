@@ -22,6 +22,7 @@ unc0ver is written for Python 3 and requires the following libraries to be prese
 | -p | Prefix to dynamic string e.g. '?' or '&' Useful for querystrings |
 | -c | Case to convert dynamic string to. Useful if wordlist is messy but you want to lowercase everything e.g. `-c lower` |
 | -r | range of integers for fuzzung numeric files or IDs e.g. 1:300 will create numbers from 1 to 300 in place of the dynamic string |
+| -i | list of HTTP error codes to igne. By default this is set to "404,502,503,504"|
 | -f | Follow re-directs, off by default |
 | -l | Simple rate limiting. value is number of seconds between requests. However due to Threading 12 requests are made at same time before the wait |
 | -n | Note field in results. Defaults to Server header but can be overridden with title or h1 to display the pages `<title>` or `<h1>` content |

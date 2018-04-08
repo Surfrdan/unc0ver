@@ -131093,3 +131093,5 @@ zzzzz
 expectct
 map_tile
 static_map
+casfailed
+login_error
