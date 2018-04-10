@@ -117,11 +117,7 @@ def make_request(url):
             soup = BeautifulSoup(r.text, "html.parser")
             if soup:
                 try:
-                    note = soup.find(args.note, limit=1)
-                    if note is not None:
-                        print('foo')
-                    else:
-                        print('bar')
+                    note = str(soup.find(args.note))
                 except:
                     note = 'Error'
                     pass
@@ -172,7 +168,7 @@ def make_request(url):
     else:
         response_time = colored(str(int(r.elapsed.total_seconds())), 'green')
 
-    print ('{0} {1} {2}s {3}B {4} {5} {6} {7} {8}'.format(status_code, timestamp(), response_time, size, counter, content_type, url, note.strip(), needle).strip('\r\n'))
+    print ('{0} {1} {2}s {3}B {4} {5} {6} {7} {8}'.format(status_code, timestamp(), response_time, size, counter, content_type, url, ''.join(note.splitlines()), needle).strip('\r\n'))
 
     if args.body:
         try:
