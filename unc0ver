@@ -92,7 +92,7 @@ def get_status_tally():
         print("{0} {1}".format(code, count))
 
 def make_request(url):
-    global request_count, file_count, args
+    global request_count, file_count
     request_count += 1
     user_agent = get_random_user_agent()
     headers = {
@@ -104,7 +104,7 @@ def make_request(url):
     if args.ratelimit:
         time.sleep(args.ratelimit)
 
-    note = ''
+    note = None
     r = None
     needle = None
     try:
@@ -115,23 +115,23 @@ def make_request(url):
         size = len(r.text)
         if args.note:
             soup = BeautifulSoup(r.text, "html.parser")
-            if args.note == 'title':
-                title = soup.find('title')
-                if title:
-                    note = title.text
-            if args.note == 'h1':
-                title = soup.find('h1')
-                if title:
-                    note = title.text
-            if args.note == 'meta':
-                soup = BeautifulSoup(r.text, "html.parser")
-                title = soup.find("div", attrs={"id": "app"})
-                if title:
-                    note = title.text
+            if soup:
+                try:
+                    note = soup.find(args.note, limit=1)
+                    if note is not None:
+                        print('foo')
+                    else:
+                        print('bar')
+                except:
+                    note = 'Error'
+                    pass
+            else:
+                note = 'Error'
         if args.needle:
             if args.needle in r.text:
                 needle = 'NEEDLE'
-    except (ConnectionError, ProxyError, SSLError, Timeout) as e:
+    except (ConnectionError, ProxyError, SSLError, Timeout, ) as e:
+        print(e)
         status_code = 0
     #tally_status(status_code)
     if status_code in [0]:
