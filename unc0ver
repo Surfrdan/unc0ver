@@ -104,7 +104,7 @@ def make_request(url):
     if args.ratelimit:
         time.sleep(args.ratelimit)
 
-    note = None
+    note = '' 
     r = None
     needle = None
     try:
