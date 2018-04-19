@@ -214,6 +214,7 @@ def read_wordlist():
         if args.range:
             number_range = args.range.split(':')
             words = range(int(number_range[0]),int(number_range[1]))
+            return words
         else:
             wordlist = open(args.wordlist, encoding = "ISO-8859-1")
             words = wordlist.read().splitlines()
@@ -228,6 +229,7 @@ def read_wordlist():
 def main_loop(words, args):
     global file_count
     urls = list()
+
     for word in words:
         file_count += 1
         word = str(word).strip()
