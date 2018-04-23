@@ -27,6 +27,7 @@ def parse_args():
     arg_c_help = 'Case to convert input into extension e.g. upper'
     arg_r_help = 'Case to convert input into extension e.g. upper'
     arg_i_help = 'list of HTTP response codes to ignore. Defaults to 403,404. Set this to blank to include 404s or 403s or specify a list of comma seperated codes to ignore'
+    arg_is_help = 'list of response sizes to ignore in bytes.'
     arg_f_help = 'Follow Redirects off by default'
     arg_l_help = 'Rate Limit in requests per minute'
     arg_n_help = 'Note field preference, defaults to Server header or Location on a 3xx options are title,h1,h2,meta'
@@ -43,6 +44,7 @@ def parse_args():
     parser.add_argument('-c', '--case', type=str, help=arg_c_help, default=False)
     parser.add_argument('-r', '--range', type=str, help=arg_r_help, default=False)
     parser.add_argument('-i', '--ignore', type=str, help=arg_i_help, default="404,502,503,504")
+    parser.add_argument('-is', '--ignore_size', type=str, help=arg_is_help, default="")
     parser.add_argument('-f', '--follow', action='store_true', help=arg_f_help, default=False)
     parser.add_argument('-l', '--ratelimit', type=int, help=arg_l_help, default=0)
     parser.add_argument('-n', '--note', type=str, help=arg_n_help, default=False)
@@ -113,6 +115,8 @@ def make_request(url):
         if (status_code in args.ignore):
             return
         size = len(r.text)
+        if (size in args.ignore_size):
+            return
         if args.note:
             soup = BeautifulSoup(r.text, "html.parser")
             if soup:
@@ -126,7 +130,7 @@ def make_request(url):
         if args.needle:
             if args.needle in r.text:
                 needle = 'NEEDLE'
-    except (ConnectionError, ProxyError, SSLError, Timeout, ) as e:
+    except (ConnectionError, ProxyError, SSLError, Timeout) as e:
         print(e)
         status_code = 0
     #tally_status(status_code)
@@ -260,7 +264,10 @@ try:
     args = parse_args()
     if args.ignore:
         args.ignore = [int(x) for x in  args.ignore.split(',')]
-
+    if args.ignore_size:
+        args.ignore_size = [int(x) for x in  args.ignore_size.split(',')]
+    else:
+        args.ignore_size = []
     check_security_txt()
     words = read_wordlist()
     main_loop(words, args)
