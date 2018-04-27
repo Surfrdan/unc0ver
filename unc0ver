@@ -94,7 +94,7 @@ def get_status_tally():
         print("{0} {1}".format(code, count))
 
 def make_request(url):
-    global request_count, file_count
+    global request_count, file_count, cookie_jar
     request_count += 1
     user_agent = get_random_user_agent()
     headers = {
@@ -110,7 +110,7 @@ def make_request(url):
     r = None
     needle = None
     try:
-        r = requests.get(url, verify=False, allow_redirects=args.follow, headers=headers, timeout=args.timeout)
+        r = requests.get(url, verify=False, allow_redirects=args.follow, headers=headers, timeout=args.timeout, cookies=cookie_jar)
         status_code = r.status_code
         if (status_code in args.ignore):
             return
@@ -249,7 +249,7 @@ def main_loop(words, args):
         if word.startswith('/'):
             word = word[1:]
         urls.append('{0}{1}'.format(args.base_url,word))
-
+    
     pool = ThreadPool(args.threads)
     new_results = pool.map_async(make_request, urls)
     pool.close()
@@ -270,6 +270,7 @@ try:
         args.ignore_size = []
     check_security_txt()
     words = read_wordlist()
+    cookie_jar = requests.cookies.RequestsCookieJar()
     main_loop(words, args)
 except KeyboardInterrupt:
     sys.exit(1)
