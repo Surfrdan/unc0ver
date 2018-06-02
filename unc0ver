@@ -32,6 +32,7 @@ def parse_args():
     arg_l_help = 'Rate Limit in requests per minute'
     arg_n_help = 'Note field preference, defaults to Server header or Location on a 3xx options are title,h1,h2,meta'
     arg_N_help = 'Haystack search. If value found in response (haystack), "NEEDLE" is added to report for easy grepping of reflected values'
+    arg_H_help = 'Headers e.g. "Host: example.com"'
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-w', '--wordlist', type=str, help=arg_w_help, nargs='?', default=script_dir + '/wordlists/complete_wordlist.txt')
@@ -49,6 +50,7 @@ def parse_args():
     parser.add_argument('-l', '--ratelimit', type=int, help=arg_l_help, default=0)
     parser.add_argument('-n', '--note', type=str, help=arg_n_help, default=False)
     parser.add_argument('-N', '--needle', type=str, help=arg_N_help, default=False)
+    parser.add_argument('-H', '--headers', type=str, help=arg_N_help, default=False)
     return parser.parse_args()
 
 def print_banner():
@@ -100,9 +102,12 @@ def make_request(url):
     headers = {
         'User-Agent': user_agent 
     }
+    if args.headers:
+        for header in args.headers:
+            h = header.split(':')
+            headers[h[0]] = h[1].lstrip()
     if args.extension:
         url = '{0}{1}'.format(url,args.extension)
-
     if args.ratelimit:
         time.sleep(args.ratelimit)
 
@@ -268,6 +273,8 @@ try:
         args.ignore_size = [int(x) for x in  args.ignore_size.split(',')]
     else:
         args.ignore_size = []
+    if args.headers:
+        args.headers = [str(x) for x in args.headers.split(',')]
     check_security_txt()
     words = read_wordlist()
     cookie_jar = requests.cookies.RequestsCookieJar()
