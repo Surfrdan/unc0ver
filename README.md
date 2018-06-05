@@ -48,10 +48,10 @@ $ ./unc0ver -u http://www.example.com/ -w complete_wordlist.txt -c lower -e .php
 404 09:20:58 http://www.example.com/itemid.php Example Domain
 ```
 
-Here we utilise the grep command with an inverse match and 2 HTTP error codes to filter out unwanted results
+Here we utilise ignore arguments with 2 supplied HTTP error codes and also asking to ignore all zero byte responses
 
 ```
-$ ./unc0ver -u http://www.example.com/ -w complete_wordlist.txt | grep -v -E "500|403"                                  
+$ ./unc0ver -u http://www.example.com/ -w complete_wordlist.txt -i "500|403" -is 0                                 
                                                                                                                                                 
                        ___                                                                                                                      
      _   _ _ __   ___ / _ \__   _____ _ __                                                                                                      
