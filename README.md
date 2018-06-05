@@ -26,7 +26,7 @@ unc0ver is written for Python 3 and requires the following libraries to be prese
 | -f | Follow re-directs, off by default |
 | -l | Simple rate limiting. Value is the number of seconds between requests. However, due to threading 12 requests are made at the same time before the wait |
 | -n | Note field in results. Defaults to Server header but can be overridden with title or h1 to display the pages `<title>` or `<h1>` content |
-| -H | SPecify coma separated header values e.g. "Host: example.com, Content-type: application/json"
+| -H | Specify comma separated header values e.g. "Host: example.com, Content-type: application/json"
  
 ## Examples ##
 
