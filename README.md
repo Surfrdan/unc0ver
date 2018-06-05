@@ -23,6 +23,7 @@ unc0ver is written for Python 3 and requires the following libraries to be prese
 | -c | Case to convert a dynamic string to. Useful if wordlist is messy but you want to lowercase everything e.g. `-c lower` |
 | -r | range of integers for fuzzing numeric files or IDs e.g. 1:300 will create numbers from 1 to 300 in place of the dynamic string |
 | -i | list of HTTP error codes to ignore. By default this is set to "404,502,503,504"|
+| -is | list of returned body sizes in bytes to ignore. e.g. "0,2,2067"|
 | -f | Follow re-directs, off by default |
 | -l | Simple rate limiting. Value is the number of seconds between requests. However, due to threading 12 requests are made at the same time before the wait |
 | -n | Note field in results. Defaults to Server header but can be overridden with title or h1 to display the pages `<title>` or `<h1>` content |
