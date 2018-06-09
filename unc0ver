@@ -27,7 +27,7 @@ def parse_args():
     arg_c_help = 'Case to convert input into extension e.g. upper'
     arg_r_help = 'Case to convert input into extension e.g. upper'
     arg_i_help = 'list of HTTP response codes to ignore. Defaults to 403,404. Set this to blank to include 404s or 403s or specify a list of comma seperated codes to ignore'
-    arg_is_help = 'list of response sizes to ignore in bytes.'
+    arg_is_help = 'list of response sizes to ignore in bytes. also supports ranges e.g. 100:110'
     arg_f_help = 'Follow Redirects off by default'
     arg_l_help = 'Rate Limit in requests per minute'
     arg_n_help = 'Note field preference, defaults to Server header or Location on a 3xx options are title,h1,h2,meta'
@@ -270,7 +270,11 @@ try:
     if args.ignore:
         args.ignore = [int(x) for x in  args.ignore.split(',')]
     if args.ignore_size:
-        args.ignore_size = [int(x) for x in  args.ignore_size.split(',')]
+        if args.ignore_size.find(':'):
+            size_range = args.ignore_size.split(':')
+            args.ignore_size = range(int(size_range[0]), int(size_range[1]))
+        else:
+            args.ignore_size = [int(x) for x in  args.ignore_size.split(',')]
     else:
         args.ignore_size = []
     if args.headers:
