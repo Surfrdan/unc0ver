@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3 -Wall
 
 import argparse
 from multiprocessing.dummy import Pool as ThreadPool
@@ -14,7 +14,6 @@ from termcolor import colored
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 script_dir = os.path.dirname(os.path.realpath(__file__))
-status_tally = dict() 
 
 def parse_args():
     arg_w_help = 'Wordlist file e.g. wordlist.txt'
@@ -86,15 +85,6 @@ def get_random_user_agent():
     ]
     return random.choice(user_agents)
 
-def tally_status(status_code):
-    global status_tally
-    status_code = str(status_code)
-    status_tally[status_code] += 1
-
-def get_status_tally():
-    for code, count in status_tally.items():
-        print("{0} {1}".format(code, count))
-
 def make_request(url):
     global request_count, file_count, cookie_jar
     request_count += 1
@@ -109,11 +99,13 @@ def make_request(url):
     if args.extension:
         url = '{0}{1}'.format(url,args.extension)
     if args.ratelimit:
-        time.sleep(args.ratelimit)
+        if args.ratelimit > 0:
+            time.sleep(args.ratelimit)
 
     note = '' 
     r = None
     needle = None
+    status_code = 0
     try:
         r = requests.get(url, verify=False, allow_redirects=args.follow, headers=headers, timeout=args.timeout, cookies=cookie_jar)
         status_code = r.status_code
@@ -129,16 +121,31 @@ def make_request(url):
                     note = str(soup.find(args.note))
                 except:
                     note = 'Error'
+                    print('HERE')
                     pass
             else:
                 note = 'Error'
         if args.needle:
             if args.needle in r.text:
                 needle = 'NEEDLE'
-    except (ConnectionError, ProxyError, SSLError, Timeout) as e:
+    except requests.exceptions.HTTPError as e:
         print(e)
-        status_code = 0
-    #tally_status(status_code)
+    except requests.exceptions.ConnectionError as e:
+        print(e)
+    except requests.exceptions.Timeout as e:
+        print(e)
+    except requests.exceptions.TooManyRedirects as e:
+        print(e)
+    except requests.exceptions.ProxyError as e:
+        print(e)
+    except requests.exceptions.SSLError as e:
+        print(e)
+    except requests.exceptions.RequestException as e:
+        print(e)
+    except TypeError as e:
+        print(e)
+    except:
+        print(sys.exc_info()[0])
     if status_code in [0]:
         status_code = colored('000', 'red')
         size = '000'
@@ -172,6 +179,7 @@ def make_request(url):
         content_type = r.headers['Content-Type']
 
     response_time = None
+    
     if (r.elapsed.total_seconds() > args.timeout - 2):
         response_time = colored(str(int(r.elapsed.total_seconds())), 'red')
     else:
@@ -227,6 +235,7 @@ def read_wordlist():
         else:
             wordlist = open(args.wordlist, encoding = "ISO-8859-1")
             words = wordlist.read().splitlines()
+            wordlist.close()
             if words:
                 return words
             else:
@@ -238,11 +247,9 @@ def read_wordlist():
 def main_loop(words, args):
     global file_count
     urls = list()
-
     for word in words:
         file_count += 1
         word = str(word).strip()
-
         if args.case == 'upper':
             word = word.upper()
         if args.case == 'lower':
@@ -254,13 +261,10 @@ def main_loop(words, args):
         if word.startswith('/'):
             word = word[1:]
         urls.append('{0}{1}'.format(args.base_url,word))
-    
     pool = ThreadPool(args.threads)
     new_results = pool.map_async(make_request, urls)
     pool.close()
     pool.join()
-    get_status_tally()
-    return True
 
 try:
     file_count = 0
@@ -270,7 +274,7 @@ try:
     if args.ignore:
         args.ignore = [int(x) for x in  args.ignore.split(',')]
     if args.ignore_size:
-        if args.ignore_size.find(':'):
+        if args.ignore_size.find(':') > 1:
             size_range = args.ignore_size.split(':')
             args.ignore_size = range(int(size_range[0]), int(size_range[1]))
         else:
@@ -283,5 +287,5 @@ try:
     words = read_wordlist()
     cookie_jar = requests.cookies.RequestsCookieJar()
     main_loop(words, args)
-except KeyboardInterrupt:
+except:
     sys.exit(1)
