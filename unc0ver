@@ -1,4 +1,6 @@
-#!/usr/bin/python3 -Wall
+#!/usr/bin/env python3
+# debug with -Wall
+
 
 import argparse
 from multiprocessing.dummy import Pool as ThreadPool
@@ -9,9 +11,11 @@ import datetime
 import random
 import time
 import urllib3
+import base64
 from bs4 import BeautifulSoup
 from termcolor import colored
 
+debug = False 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -30,6 +34,7 @@ def parse_args():
     arg_f_help = 'Follow Redirects off by default'
     arg_l_help = 'Rate Limit in requests per minute'
     arg_n_help = 'Note field preference, defaults to Server header or Location on a 3xx options are title,h1,h2,meta'
+    arg_P_help = 'Enable pingback to domain. Uses an md5 of the URL to create the subdomain to use on a wildcard DNS domain'
     arg_N_help = 'Haystack search. If value found in response (haystack), "NEEDLE" is added to report for easy grepping of reflected values'
     arg_H_help = 'Headers e.g. "Host: example.com"'
 
@@ -48,6 +53,7 @@ def parse_args():
     parser.add_argument('-f', '--follow', action='store_true', help=arg_f_help, default=False)
     parser.add_argument('-l', '--ratelimit', type=int, help=arg_l_help, default=0)
     parser.add_argument('-n', '--note', type=str, help=arg_n_help, default=False)
+    parser.add_argument('-P', '--pingback', type=str, help=arg_P_help, default=False)
     parser.add_argument('-N', '--needle', type=str, help=arg_N_help, default=False)
     parser.add_argument('-H', '--headers', type=str, help=arg_N_help, default=False)
     return parser.parse_args()
@@ -101,7 +107,18 @@ def make_request(url):
     if args.ratelimit:
         if args.ratelimit > 0:
             time.sleep(args.ratelimit)
-
+    if args.pingback:
+        try:
+            url_encoded = url.encode('utf8')
+            url_encoded = base64.b16encode(url_encoded).lower()
+            pingback_fqdn = '{}.{}'.format(url_encoded.decode('utf-8'), args.pingback)
+            if debug:
+                print(pingback_fqdn)
+            headers['Referer'] = pingback_fqdn
+            headers['X-Wap-Profile'] = 'http://{}/'.format(pingback_fqdn)
+        except:
+            print(sys.exc_info()[0])
+ 
     note = '' 
     r = None
     needle = None
@@ -120,8 +137,9 @@ def make_request(url):
                 try:
                     note = str(soup.find(args.note))
                 except:
+                    if debug:
+                        print(sys.exc_info()[0])
                     note = 'Error'
-                    print('HERE')
                     pass
             else:
                 note = 'Error'
@@ -129,23 +147,32 @@ def make_request(url):
             if args.needle in r.text:
                 needle = 'NEEDLE'
     except requests.exceptions.HTTPError as e:
-        print(e)
+        if debug:
+            print(e)
     except requests.exceptions.ConnectionError as e:
-        print(e)
+        if debug:
+            print(e)
     except requests.exceptions.Timeout as e:
-        print(e)
+        if debug:
+            print(e)
     except requests.exceptions.TooManyRedirects as e:
-        print(e)
+        if debug:
+            print(e)
     except requests.exceptions.ProxyError as e:
-        print(e)
+        if debug:
+            print(e)
     except requests.exceptions.SSLError as e:
-        print(e)
+        if debug:
+            print(e)
     except requests.exceptions.RequestException as e:
-        print(e)
+        if debug:
+            print(e)
     except TypeError as e:
-        print(e)
+        if debug:
+            print(e)
     except:
-        print(sys.exc_info()[0])
+        if debug:
+            print(sys.exc_info()[0])
     if status_code in [0]:
         status_code = colored('000', 'red')
         size = '000'
