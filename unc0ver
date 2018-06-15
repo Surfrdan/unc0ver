@@ -131,6 +131,9 @@ def make_request(url):
         size = len(r.text)
         if (size in args.ignore_size):
             return
+        cookie = ' '
+        if r.headers['set-cookie']:
+            cookie = 'C'
         if args.note:
             soup = BeautifulSoup(r.text, "html.parser")
             if soup:
@@ -212,7 +215,7 @@ def make_request(url):
     else:
         response_time = colored(str(int(r.elapsed.total_seconds())), 'green')
 
-    print ('{0} {1} {2}s {3}B {4} {5} {6} {7} {8}'.format(status_code, timestamp(), response_time, size, counter, content_type, url, ''.join(note.splitlines()), needle).strip('\r\n'))
+    print ('{0} {1} {2}s {3}B {4} {5} {6} {7} {8} {9}'.format(status_code, timestamp(), response_time, size, counter, cookie, content_type, url, ''.join(note.splitlines()), needle).strip('\r\n'))
 
     if args.body:
         try:
