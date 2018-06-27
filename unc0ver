@@ -152,30 +152,44 @@ def make_request(url):
     except requests.exceptions.HTTPError as e:
         if args.debug:
             print(e)
+        return None
     except requests.exceptions.ConnectionError as e:
         if args.debug:
             print(e)
+        return None
     except requests.exceptions.Timeout as e:
         if args.debug:
             print(e)
+        return None
     except requests.exceptions.TooManyRedirects as e:
         if args.debug:
             print(e)
+        return None
     except requests.exceptions.ProxyError as e:
         if args.debug:
             print(e)
+        return None
     except requests.exceptions.SSLError as e:
         if args.debug:
             print(e)
+        return None
     except requests.exceptions.RequestException as e:
         if args.debug:
             print(e)
+        return None
     except TypeError as e:
         if args.debug:
             print(e)
+        return None
+    except AttributeError as e:
+        # problem with cryptography or pyopenssl
+        if args.debug:
+            print(e)
+        return None
     except:
         if args.debug:
             print(sys.exc_info()[0])
+        return None
     if status_code in [0]:
         status_code = colored('000', 'red')
         size = '000'
