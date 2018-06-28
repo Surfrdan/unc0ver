@@ -93,12 +93,13 @@ def get_random_user_agent():
     return random.choice(user_agents)
 
 def make_request(url):
-    global request_count, file_count, cookie_jar
+    global request_count, file_count, cookie_jar, s
     request_count += 1
     user_agent = get_random_user_agent()
     headers = {
         'User-Agent': user_agent 
     }
+    parsed_url = urllib3.util.parse_url(url)
     if args.headers:
         for header in args.headers:
             h = header.split(':')
@@ -110,7 +111,6 @@ def make_request(url):
             time.sleep(args.ratelimit)
     if args.pingback:
         try:
-            parsed_url = urllib3.util.parse_url(url)
             pingback_fqdn = '{}.{}'.format(parsed_url.host.replace('.', ''), args.pingback)        
             headers['Referer'] = pingback_fqdn
             headers['Host'] = pingback_fqdn
@@ -123,8 +123,12 @@ def make_request(url):
     r = None
     needle = None
     status_code = 0
+    if args.debug:
+        print(url)
     try:
-        r = requests.get(url, verify=False, allow_redirects=args.follow, headers=headers, timeout=args.timeout, cookies=cookie_jar)
+        r = s.get(url, verify=False, allow_redirects=args.follow, headers=headers, timeout=args.timeout, cookies=cookie_jar)
+        if args.debug:
+            print(r)
         status_code = r.status_code
         if (status_code in args.ignore):
             return
@@ -132,7 +136,7 @@ def make_request(url):
         if (size in args.ignore_size):
             return
         cookie = ' '
-        if r.headers['set-cookie']:
+        if r.headers.get('set-cookie'):
             cookie = 'C'
         if args.note:
             soup = BeautifulSoup(r.text, "html.parser")
@@ -187,6 +191,7 @@ def make_request(url):
             print(e)
         return None
     except:
+        print(sys.exc_info()[0])
         if args.debug:
             print(sys.exc_info()[0])
         return None
@@ -198,29 +203,29 @@ def make_request(url):
         status_code = colored(status_code, 'green')
         if ('server' in r.headers):
             if not args.note:
-                note = r.headers['server']
+                note = r.headers.get('server')
 
     if status_code in [301, 302, 303, 304, 305, 306, 307, 308]:
         if ('location' in r.headers):
             status_code = colored(status_code, 'yellow')
             if not args.note:
-                note = r.headers['Location']
+                note = r.headers.get('Location')
 
     if status_code in range(500,511,1):
         status_code = colored(status_code, 'red')
         if ('server' in r.headers):
             if not args.note:
-                note = r.headers['server']
+                note = r.headers.get('server')
 
     if status_code in [400,401,402,403,404]:
         status_code = colored(status_code, 'red')
         if ('server' in r.headers):
             if not args.note:
-                note = r.headers['server']
+                note = r.headers.get('server')
     counter = '[{0}/{1}]'.format(request_count,file_count)
     content_type = 'none'
     if 'Content-Type' in r.headers:
-        content_type = r.headers['Content-Type']
+        content_type = r.headers.get('Content-Type')
 
     response_time = None
     
@@ -316,6 +321,10 @@ try:
     request_count = 0
     print_banner()
     args = parse_args()
+    s = requests.Session()
+    adapter = requests.adapters.HTTPAdapter(pool_connections=1000, pool_maxsize=1000)
+    s.mount('http://', adapter)
+    s.mount('https://', adapter)
     if args.ignore:
         args.ignore = [int(x) for x in  args.ignore.split(',')]
     if args.ignore_size:
