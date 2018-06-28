@@ -298,7 +298,8 @@ def main_loop(words, args):
             word = word.upper()
         if args.case == 'lower':
             word = word.lower()
-    
+        if args.case == 'first':
+            word = word.title() 
         if args.prefix:
             word = '{0}{1}'.format(args.prefix, word)
     
