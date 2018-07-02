@@ -33,7 +33,7 @@ def parse_args():
     arg_f_help = 'Follow Redirects off by default'
     arg_l_help = 'Rate Limit in requests per minute'
     arg_n_help = 'Note field preference, defaults to Server header or Location on a 3xx options are title,h1,h2,meta'
-    arg_P_help = 'Enable pingback to domain. Uses an md5 of the URL to create the subdomain to use on a wildcard DNS domain'
+    arg_P_help = 'Enable pingback to domain. Uses an hash of the URL to create the subdomain to use on a wildcard DNS domain'
     arg_N_help = 'Haystack search. If value found in response (haystack), "NEEDLE" is added to report for easy grepping of reflected values'
     arg_H_help = 'Headers e.g. "Host: example.com"'
     arg_D_help = 'Debug mode'
