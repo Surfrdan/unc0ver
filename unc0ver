@@ -36,6 +36,7 @@ def parse_args():
     arg_P_help = 'Enable pingback to domain. Uses an hash of the URL to create the subdomain to use on a wildcard DNS domain'
     arg_N_help = 'Haystack search. If value found in response (haystack), "NEEDLE" is added to report for easy grepping of reflected values'
     arg_H_help = 'Headers e.g. "Host: example.com"'
+    arg_a_help = 'Randomise User Agent'
     arg_D_help = 'Debug mode'
 
     parser = argparse.ArgumentParser()
@@ -51,11 +52,12 @@ def parse_args():
     parser.add_argument('-i', '--ignore', type=str, help=arg_i_help, default="404,502,503,504")
     parser.add_argument('-is', '--ignore_size', type=str, help=arg_is_help, default="")
     parser.add_argument('-f', '--follow', action='store_true', help=arg_f_help, default=False)
-    parser.add_argument('-l', '--ratelimit', type=int, help=arg_l_help, default=0)
+    parser.add_argument('-l', '--ratelimit', type=float, help=arg_l_help, default=0.05)
     parser.add_argument('-n', '--note', type=str, help=arg_n_help, default=False)
     parser.add_argument('-P', '--pingback', type=str, help=arg_P_help, default=False)
     parser.add_argument('-N', '--needle', type=str, help=arg_N_help, default=False)
     parser.add_argument('-H', '--headers', type=str, help=arg_N_help, default=False)
+    parser.add_argument('-a', '--random_ua', action='store_true', help=arg_a_help, default=False)
     parser.add_argument('-D', '--debug', action='store_true', help=arg_D_help, default=False)
     return parser.parse_args()
 
@@ -92,12 +94,21 @@ def get_random_user_agent():
     ]
     return random.choice(user_agents)
 
+def get_real_user_agent():
+    user_agent = 'Mozilla/5.0 (compatible; unc0ver/0.1; +https://github.com/Surfrdan/unc0ver)'
+    return user_agent
+
 def make_request(url):
     global request_count, file_count, cookie_jar, s
     request_count += 1
-    user_agent = get_random_user_agent()
+    user_agent = ''
+    if args.random_ua:
+        user_agent = get_random_user_agent()
+    else:
+        user_agent = get_real_user_agent()
     headers = {
-        'User-Agent': user_agent 
+        'User-Agent': user_agent,
+        'X-Note': 'Bug Bounty Security Scan in progress. Not intentional abuse'
     }
     parsed_url = urllib3.util.parse_url(url)
     if args.headers:
@@ -107,7 +118,7 @@ def make_request(url):
     if args.extension:
         url = '{0}{1}'.format(url,args.extension)
     if args.ratelimit:
-        if args.ratelimit > 0:
+        if args.ratelimit > 0.0:
             time.sleep(args.ratelimit)
     if args.pingback:
         try:
