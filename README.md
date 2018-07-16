@@ -16,6 +16,7 @@ unc0ver is written for Python 3 and requires the following libraries to be prese
 | Arg | Description |
 | --- | ----------- |
 | -u | Base URL for requests to be made to |
+| -a | Randomise User-Agent header from some common browser IDs |
 | -w | Wordlist file e.g. wordlist.txt |
 | -b | Include Body in output |
 | -e | File Extension or other string to appear in URL after the dynamic string e.g. '.php' or '=9999' or '/further/directories' |
@@ -25,7 +26,7 @@ unc0ver is written for Python 3 and requires the following libraries to be prese
 | -i | list of HTTP error codes to ignore. By default this is set to "404,502,503,504"|
 | -is | list of returned body sizes in bytes to ignore. e.g. "0,2,2067", also supports range syntax e.g. 100:130 to ignore anything between 100 and 130 bytes |
 | -f | Follow re-directs, off by default |
-| -l | Simple rate limiting. Value is the number of seconds between requests. However, due to threading 12 requests are made at the same time before the wait |
+| -l | Simple rate limiting. Value is the number of miliseconds between requests |
 | -n | Note field in results. Defaults to Server header but can be overridden with title or h1 to display the pages `<title>` or `<h1>` content |
 | -H | Specify comma separated header values e.g. "Host: example.com, Content-type: application/json"
 | -D | Debug mode
