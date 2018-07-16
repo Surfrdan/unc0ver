@@ -128,7 +128,8 @@ def make_request(url):
             headers['X-Wap-Profile'] = 'http://{}/'.format(pingback_fqdn)
             headers['Cache-Control'] = 'no-transform'
         except:
-            print(sys.exc_info()[0])
+            if args.debug:
+                print(sys.exc_info()[0])
  
     note = '' 
     r = None
@@ -202,7 +203,6 @@ def make_request(url):
             print(e)
         return None
     except:
-        print(sys.exc_info()[0])
         if args.debug:
             print(sys.exc_info()[0])
         return None
@@ -309,7 +309,7 @@ def main_loop(words, args):
     urls = list()
     for word in words:
         file_count += 1
-        word = str(word).strip()
+        word = str(word)
         if args.case == 'upper':
             word = word.upper()
         if args.case == 'lower':
