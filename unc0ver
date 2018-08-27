@@ -75,7 +75,7 @@ def print_banner():
     print(colored(banner, 'magenta'))
 
 def timestamp():
-    return datetime.datetime.now().strftime("%X")
+    return datetime.now().strftime("%X")
 
 def get_random_user_agent():
     user_agents = [
@@ -140,7 +140,7 @@ def make_request(url):
             all_headers['X-Wap-Profile'] = 'http://{}/'.format(pingback_fqdn)
             all_headers['Cache-Control'] = 'no-transform'
         except Exception:
-                print(sys.exc_info()[0])
+            print(sys.exc_info()[0])
  
     note = '' 
     r = None
