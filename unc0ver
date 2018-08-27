@@ -1,22 +1,24 @@
 #!/usr/bin/env python3
 # debug with -Wall
 
-
 import argparse
 from multiprocessing.dummy import Pool as ThreadPool
 import requests
 import os
 import sys
-import datetime
 import random
 import time
 import urllib3
 import base64
 from bs4 import BeautifulSoup
 from termcolor import colored
+from datetime import datetime
+import calendar
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 script_dir = os.path.dirname(os.path.realpath(__file__))
+
+TAG_TS = '##TS##'
 
 def parse_args():
     arg_w_help = 'Wordlist file e.g. wordlist.txt'
@@ -98,23 +100,33 @@ def get_real_user_agent():
     user_agent = 'Mozilla/5.0 (compatible; unc0ver/0.1; +https://github.com/Surfrdan/unc0ver)'
     return user_agent
 
+def parse_tags(url):
+    if TAG_TS in url:
+        d = datetime.utcnow()
+        unixtime = calendar.timegm(d.utctimetuple())
+        url = url.replace(TAG_TS, str(unixtime))
+    return url
+
 def make_request(url):
     global request_count, file_count, cookie_jar, s
     request_count += 1
+
+    url = parse_tags(url)
     user_agent = ''
     if args.random_ua:
         user_agent = get_random_user_agent()
     else:
         user_agent = get_real_user_agent()
-    headers = {
+    all_headers = {
         'User-Agent': user_agent,
         'X-Note': 'Bug Bounty Security Scan in progress. Not intentional abuse'
     }
     parsed_url = urllib3.util.parse_url(url)
+    
     if args.headers:
         for header in args.headers:
             h = header.split(':')
-            headers[h[0]] = h[1].lstrip()
+            all_headers[h[0]] = h[1].lstrip()
     if args.extension:
         url = '{0}{1}'.format(url,args.extension)
     if args.ratelimit:
@@ -123,12 +135,11 @@ def make_request(url):
     if args.pingback:
         try:
             pingback_fqdn = '{}.{}'.format(parsed_url.host.replace('.', ''), args.pingback)        
-            headers['Referer'] = pingback_fqdn
-            headers['Host'] = pingback_fqdn
-            headers['X-Wap-Profile'] = 'http://{}/'.format(pingback_fqdn)
-            headers['Cache-Control'] = 'no-transform'
-        except:
-            if args.debug:
+            all_headers['Referer'] = pingback_fqdn
+            all_headers['Host'] = pingback_fqdn
+            all_headers['X-Wap-Profile'] = 'http://{}/'.format(pingback_fqdn)
+            all_headers['Cache-Control'] = 'no-transform'
+        except Exception:
                 print(sys.exc_info()[0])
  
     note = '' 
@@ -138,7 +149,7 @@ def make_request(url):
     if args.debug:
         print(url)
     try:
-        r = s.get(url, verify=False, allow_redirects=args.follow, headers=headers, timeout=args.timeout, cookies=cookie_jar)
+        r = s.get(url, verify=False, allow_redirects=args.follow, headers=all_headers, timeout=args.timeout, cookies=cookie_jar)
         if args.debug:
             print(r)
         status_code = r.status_code
@@ -156,8 +167,7 @@ def make_request(url):
                 try:
                     note = str(soup.find(args.note))
                 except:
-                    if args.debug:
-                        print(sys.exc_info()[0])
+                    print(sys.exc_info()[0])
                     note = 'Error'
                     pass
             else:
@@ -202,9 +212,8 @@ def make_request(url):
         if args.debug:
             print(e)
         return None
-    except:
-        if args.debug:
-            print(sys.exc_info()[0])
+    except Exception:
+        print(sys.exc_info()[0])
         return None
     if status_code in [0]:
         status_code = colored('000', 'red')
@@ -251,6 +260,7 @@ def make_request(url):
         try:
             print (r.content)
         except Exception:
+            print(sys.exc_info()[0])
             pass
 
 def check_security_txt():
@@ -283,7 +293,10 @@ def check_security_txt():
                 input("Press Enter to continue...")
         else:
             pass
+    except requests.exceptions.ConnectionError as e:
+        pass
     except Exception:
+        print(sys.exc_info()[0])
         pass
 
 def read_wordlist():
@@ -327,30 +340,27 @@ def main_loop(words, args):
     pool.close()
     pool.join()
 
-try:
-    file_count = 0
-    request_count = 0
-    print_banner()
-    args = parse_args()
-    s = requests.Session()
-    adapter = requests.adapters.HTTPAdapter(pool_connections=1000, pool_maxsize=1000)
-    s.mount('http://', adapter)
-    s.mount('https://', adapter)
-    if args.ignore:
-        args.ignore = [int(x) for x in  args.ignore.split(',')]
-    if args.ignore_size:
-        if args.ignore_size.find(':') > 1:
-            size_range = args.ignore_size.split(':')
-            args.ignore_size = range(int(size_range[0]), int(size_range[1]))
-        else:
-            args.ignore_size = [int(x) for x in  args.ignore_size.split(',')]
+file_count = 0
+request_count = 0
+print_banner()
+args = parse_args()
+s = requests.Session()
+adapter = requests.adapters.HTTPAdapter(pool_connections=1000, pool_maxsize=1000)
+s.mount('http://', adapter)
+s.mount('https://', adapter)
+if args.ignore:
+    args.ignore = [int(x) for x in  args.ignore.split(',')]
+if args.ignore_size:
+    if args.ignore_size.find(':') > 1:
+        size_range = args.ignore_size.split(':')
+        args.ignore_size = range(int(size_range[0]), int(size_range[1]))
     else:
-        args.ignore_size = []
-    if args.headers:
-        args.headers = [str(x) for x in args.headers.split(',')]
-    check_security_txt()
-    words = read_wordlist()
-    cookie_jar = requests.cookies.RequestsCookieJar()
-    main_loop(words, args)
-except:
-    sys.exit(1)
+        args.ignore_size = [int(x) for x in  args.ignore_size.split(',')]
+else:
+    args.ignore_size = []
+if args.headers:
+    args.headers = [str(x) for x in args.headers.split(',')]
+check_security_txt()
+words = read_wordlist()
+cookie_jar = requests.cookies.RequestsCookieJar()
+main_loop(words, args)
