@@ -35,36 +35,39 @@ unc0ver is written for Python 3 and requires the following libraries to be prese
 
 Here we use the supplied wordlist and convert all strings to lower case and add a .php file extension. We're also asking for the page title instead of the Server header to be printed in the results
 ```
-$ ./unc0ver -u http://www.example.com/ -w complete_wordlist.txt -c lower -e .php -n title                               
-                                                                                                                                                
-                       ___                                                                                                                      
-     _   _ _ __   ___ / _ \__   _____ _ __                                                                                                      
-    | | | | '_ \ / __| | | \ \ / / _ \ '__|                                                                                                     
-    | |_| | | | | (__| |_| |\ V /  __/ |                                                                                                        
-     \__,_|_| |_|\___|\___/  \_/ \___|_|                                                                                                        
-                                                                                                                                                
-404 09:20:58 http://www.example.com/review.php                                                                                                  
-404 09:20:58 http://www.example.com/851.php Example Domain                                                                                      
-404 09:20:58 http://www.example.com/addtocart_.php Example Domain                                                                               
-404 09:20:58 http://www.example.com/212.php Example Domain                                                                                      
-404 09:20:58 http://www.example.com/itemid.php Example Domain
+$ ./unc0ver -u https://www.yahoo.com/ -w wordlists/complete_wordlist.txt -c lower -e .php -n title
+
+                           ___
+         _   _ _ __   ___ / _ \__   _____ _ __
+        | | | | '_ \ / __| | | \ \ / / _ \ '__|
+        | |_| | | | | (__| |_| |\ V /  __/ |
+         \__,_|_| |_|\___|\___/  \_/ \___|_|
+           An HTTP Recon Tool - By Surfrdan
+
+302 06:53:59 0s 107B [160/63786]   text/html; charset=UTF-8 https://www.yahoo.com/config.php None None
+302 06:54:05 0s 0B [910/63786]   text/html; charset=UTF-8 https://www.yahoo.com/redirect.php None None
+302 06:54:06 0s 107B [1324/63786]   text/html; charset=UTF-8 https://www.yahoo.com/config.php None None
+400 06:54:08 0s 220B [1687/63786]   text/html https://www.yahoo.com/322.php <title>Bad Request</title> None
+400 06:54:09 0s 3191B [2133/63786]   text/html; charset=iso-8859-1 https://www.yahoo.com/metro.php <title>Yahoo - 400 Bad Request</title> None
 ```
 
 Here we utilise ignore arguments with 2 supplied HTTP error codes and also asking to ignore all zero byte responses
 
 ```
-$ ./unc0ver -u http://www.example.com/ -i 500,403 -is 0                                 
-                                                                                                                                                
-                       ___                                                                                                                      
-     _   _ _ __   ___ / _ \__   _____ _ __                                                                                                      
-    | | | | '_ \ / __| | | \ \ / / _ \ '__|                                                                                                     
-    | |_| | | | | (__| |_| |\ V /  __/ |                                                                                                        
-     \__,_|_| |_|\___|\___/  \_/ \___|_|                                                                                                        
-                                                                                                                                                
-404 09:24:43 http://www.example.com/! ECS (lga/1373)                                                                                            
-404 09:24:43 http://www.example.com/4975 ECS (lga/13A5)                                                                                         
-404 09:24:43 http://www.example.com/EmailChecker ECS (lga/131B)                                                                                 
-404 09:24:43 http://www.example.com/CARLOS ECS (lga/13CE)                                                                                       
-404 09:24:43 http://www.example.com/ItemId ECS (lga/137D)
+$ ./unc0ver -u http://www.example.com/ -i 500,403 -is 0                                                                                                   [12/12]
+
+                           ___
+         _   _ _ __   ___ / _ \__   _____ _ __
+        | | | | '_ \ / __| | | \ \ / / _ \ '__|
+        | |_| | | | | (__| |_| |\ V /  __/ |
+         \__,_|_| |_|\___|\___/  \_/ \___|_|
+           An HTTP Recon Tool - By Surfrdan
+
+404 06:50:00 0s 1270B [120/63786]   text/html; charset=UTF-8 http://www.example.com/153 ECS (dca/24D9) None
+404 06:50:00 0s 1270B [121/63786]   text/html; charset=UTF-8 http://www.example.com/1041 EOS (vny006/0454) None
+404 06:50:00 0s 1270B [122/63786]   text/html; charset=UTF-8 http://www.example.com/1392 EOS (vny006/0451) None
+404 06:50:00 0s 1270B [123/63786]   text/html; charset=UTF-8 http://www.example.com/! ECS (dca/24C0) None
+404 06:50:00 0s 1270B [124/63786]   text/html; charset=UTF-8 http://www.example.com/1849 EOS (vny006/0452) None
+404 06:50:00 0s 1270B [125/63786]   text/html; charset=UTF-8 http://www.example.com/SiteInformation EOS (vny006/0452) None
 ```
 
