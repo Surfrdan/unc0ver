@@ -29,6 +29,7 @@ unc0ver is written for Python 3 and requires the following libraries to be prese
 | -l | Simple rate limiting. Value is the number of miliseconds between requests |
 | -n | Note field in results. Defaults to Server header but can be overridden with title or h1 to display the pages `<title>` or `<h1>` content |
 | -H | Specify comma separated header values e.g. "Host: example.com, Content-type: application/json"
+| -q | Quiet mode - no logo printed, just results
 | -D | Debug mode
  
 ## Examples ##
