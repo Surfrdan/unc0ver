@@ -1225,6 +1225,7 @@ detached.php
 pear_test_case.php
 browser_test.php
 http_test.php
+subsession_logon_submit.php
 live_test.php
 socket_test.php
 test_case.php
