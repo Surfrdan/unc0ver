@@ -10,6 +10,8 @@ import random
 import time
 import urllib3
 import base64
+from yahoo_oauth import OAuth2
+import json
 from bs4 import BeautifulSoup
 from termcolor import colored
 from datetime import datetime
@@ -42,6 +44,8 @@ def parse_args():
     arg_q_help = 'Quiet Mode - No Logo'
     arg_d_help = 'POST data in querystring format, separated by "&"'
     arg_D_help = 'Debug mode'
+    arg_o2_help = 'use OAuth2 authentication'
+    arg_o2c_help = 'OAuth2 credentials json file'
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-w', '--wordlist', type=str, help=arg_w_help, nargs='?', default=script_dir + '/wordlists/complete_wordlist.txt')
@@ -64,6 +68,8 @@ def parse_args():
     parser.add_argument('-H', '--headers', type=str, help=arg_N_help, default=False)
     parser.add_argument('-a', '--random_ua', action='store_true', help=arg_a_help, default=False)
     parser.add_argument('-q', '--quiet', action='store_true', help=arg_q_help, default=False)
+    parser.add_argument('-o2', '--oauth2', action='store_true', help=arg_o2_help, default=False)
+    parser.add_argument('-o2c', '--creds', type=str, help=arg_o2c_help, default='oauth2.json')
     parser.add_argument('-D', '--debug', action='store_true', help=arg_D_help, default=False)
     return parser.parse_args()
 
@@ -353,7 +359,14 @@ args = parse_args()
 
 if not args.quiet:
     print_banner()
-s = requests.Session()
+
+if args.oauth2:
+    oauth = OAuth2(None, None, from_file=args.creds)
+    if not oauth.token_is_valid():
+        oauth.refresh_access_token()
+    s = oauth.session
+else:
+    s = requests.Session()
 adapter = requests.adapters.HTTPAdapter(pool_connections=1000, pool_maxsize=1000)
 s.mount('http://', adapter)
 s.mount('https://', adapter)
