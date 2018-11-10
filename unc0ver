@@ -24,6 +24,7 @@ TAG_TS = '##TS##'
 
 def parse_args():
     arg_w_help = 'Wordlist file e.g. wordlist.txt'
+    arg_hp_help = 'Proxy server:port for both HTTP and HTTPS'
     arg_s_help = 'Timeout in seconds'
     arg_t_help = 'Number of threads to use. Defaults to 120 which can be too much on slow machines or connections'
     arg_u_help = 'Base URL e.g. https://example.com'
@@ -50,6 +51,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-w', '--wordlist', type=str, help=arg_w_help, nargs='?', default=script_dir + '/wordlists/complete_wordlist.txt')
     parser.add_argument('-s', '--timeout', type=int, help=arg_s_help, default=10)
+    parser.add_argument('-hp', '--proxy', type=str, help=arg_hp_help)
     parser.add_argument('-t', '--threads', type=int, help=arg_t_help, default=120)
     parser.add_argument('-u', '--base_url', type=str, help=arg_u_help, required=True)
     parser.add_argument('-b', '--body', action='store_true', help=arg_b_help, default=False)
@@ -131,6 +133,13 @@ def make_request(url):
         'User-Agent': user_agent,
         'X-Note': 'Bug Bounty Security Scan in progress. Not intentional abuse'
     }
+
+    proxies = None
+    if args.proxy:
+        proxies = {
+            'http' : 'http://{}'.format(args.proxy),
+            'https' : 'http://{}'.format(args.proxy)
+        }
     parsed_url = urllib3.util.parse_url(url)
     
     if args.headers:
@@ -160,9 +169,9 @@ def make_request(url):
         print(url)
     try:
         if args.data:
-            r = s.post(url=url, verify=False, allow_redirects=args.follow, headers=all_headers, timeout=args.timeout, cookies=cookie_jar, data=args.data)
+            r = s.post(url=url, verify=False, allow_redirects=args.follow, headers=all_headers, timeout=args.timeout, cookies=cookie_jar, data=args.data, proxies=proxies)
         else:
-            r = s.get(url, verify=False, allow_redirects=args.follow, headers=all_headers, timeout=args.timeout, cookies=cookie_jar)
+            r = s.get(url, verify=False, allow_redirects=args.follow, headers=all_headers, timeout=args.timeout, cookies=cookie_jar, proxies=proxies)
         if args.debug:
             print(r)
         status_code = r.status_code
